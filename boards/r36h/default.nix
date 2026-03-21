@@ -31,9 +31,10 @@
   # reads the defconfig fragment directly and doesn't see them.
   system.requiredKernelConfig = lib.mkForce [];
 
-  # Kernel modules
-  boot.initrd.availableKernelModules = [
-    "btrfs" "dm_mod" "sd_mod" "usb_storage" "mmc_block"
+  # Kernel modules — override NixOS defaults which assume x86 hardware
+  boot.initrd.includeDefaultModules = false;
+  boot.initrd.availableKernelModules = lib.mkForce [
+    "btrfs" "mmc_block" "dm_mod"
   ];
   boot.kernelModules = [
     "rtl8723bs"   # WiFi (RTL8723BS SDIO)
