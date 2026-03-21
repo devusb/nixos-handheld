@@ -14,8 +14,9 @@
     trust = /home/mhelton/code/nixos-handheld/boards/r36h/boot/trust.img;
   };
 
-  # R36H uses the gameconsole-r36s device tree (same hardware)
-  handheld.kernelDTB = "rk3326-gameconsole-r36s.dtb";
+  # R36H has KD35T133 panel — odroidgo2 DTB uses this panel driver
+  # (gameconsole-r36s.dtb uses st7703 which is wrong for this unit)
+  handheld.kernelDTB = "rk3326-odroidgo2.dtb";
   handheld.bootIni = ./boot.ini;
 
   # No bootloader — we use U-Boot + boot.ini
