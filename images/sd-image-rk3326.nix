@@ -91,8 +91,10 @@ in
       '';
 
       # No extlinux — we use boot.ini
+      # But we still need /init symlink for the initrd to find stage-2
       populateRootCommands = ''
         mkdir -p ./files/boot
+        ln -s ${config.system.build.toplevel}/init ./files/init
       '';
 
       compressImage = true;
