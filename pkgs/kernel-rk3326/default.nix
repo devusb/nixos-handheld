@@ -1,0 +1,27 @@
+{ lib, fetchurl, linuxKernel, ... }:
+
+linuxKernel.manualConfig {
+  version = "6.12.74";
+  modDirVersion = "6.12.74";
+
+  src = fetchurl {
+    url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.74.tar.xz";
+    # TODO: fill after first build attempt — nix will tell you the expected hash
+    hash = "";
+  };
+
+  configfile = ./rk3326_defconfig;
+  ignoreConfigErrors = true;
+
+  kernelPatches = [
+    {
+      name = "rk3326-handheld-support";
+      patch = ./patches/0001-rk3326-handheld-support.patch;
+    }
+  ];
+
+  extraMeta = {
+    platforms = [ "aarch64-linux" ];
+    description = "Linux 6.12.74 with RK3326 handheld patches";
+  };
+}
