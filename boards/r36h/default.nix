@@ -38,12 +38,22 @@
   boot.kernelModules = [
     "rtl8723bs"   # WiFi (RTL8723BS SDIO)
     "panfrost"    # Mali-G31 GPU
+    "dwc2"        # USB OTG controller
+    "g_ether"     # USB gadget ethernet — enables SSH over USB OTG
   ];
 
   # WiFi and Bluetooth firmware
   hardware.enableRedistributableFirmware = true;
 
   # Filesystem — use sd-image.nix defaults (ext4, label NIXOS_SD)
+
+  # USB gadget ethernet — SSH over USB OTG cable
+  networking.interfaces.usb0 = {
+    ipv4.addresses = [{
+      address = "10.0.0.1";
+      prefixLength = 24;
+    }];
+  };
 
   # Minimal system — just enough to boot and SSH in
   networking.hostName = "r36h";
