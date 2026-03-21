@@ -43,17 +43,7 @@
   # WiFi and Bluetooth firmware
   hardware.enableRedistributableFirmware = true;
 
-  # Filesystem configuration
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/ROOTFS";
-    fsType = "btrfs";
-    options = [ "compress=zlib:1" "noatime" ];
-  };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/BOOT";
-    fsType = "vfat";
-  };
+  # Filesystem — use sd-image.nix defaults (ext4, label NIXOS_SD)
 
   # Minimal system — just enough to boot and SSH in
   networking.hostName = "r36h";
