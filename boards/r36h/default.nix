@@ -31,11 +31,10 @@
   # reads the defconfig fragment directly and doesn't see them.
   system.requiredKernelConfig = lib.mkForce [];
 
-  # Kernel modules — override NixOS defaults which assume x86 hardware
+  # Kernel modules — override NixOS defaults which assume x86 hardware.
+  # Most drivers are built-in (=y) in the defconfig, not modules (=m).
   boot.initrd.includeDefaultModules = false;
-  boot.initrd.availableKernelModules = lib.mkForce [
-    "btrfs" "mmc_block" "dm_mod"
-  ];
+  boot.initrd.availableKernelModules = lib.mkForce [ ];
   boot.kernelModules = [
     "rtl8723bs"   # WiFi (RTL8723BS SDIO)
     "panfrost"    # Mali-G31 GPU
