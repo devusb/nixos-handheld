@@ -6,12 +6,11 @@ linuxKernel.manualConfig {
 
   src = fetchurl {
     url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.74.tar.xz";
-    # TODO: fill after first build attempt — nix will tell you the expected hash
-    hash = "";
+    hash = "sha256-O1busdyaQ38YnKVrgjvjdpmU9ZpOoIlbCOwNIKysoT4=";
   };
 
   configfile = ./rk3326_defconfig;
-  ignoreConfigErrors = true;
+  allowImportFromDerivation = true;
 
   kernelPatches = [
     {
