@@ -7,11 +7,11 @@
     ../../images/sd-image-rk3326.nix
   ];
 
-  # Boot blob paths — user must place these in boards/r36h/boot/
+  # Boot blobs extracted from working R36H ArkOS SD card
   handheld.bootBlobs = {
-    idbloader = ./boot/idbloader.img;
-    uboot = ./boot/uboot.img;
-    trust = ./boot/trust.img;
+    idbloader = /home/mhelton/code/nixos-handheld/boards/r36h/boot/idbloader.img;
+    uboot = /home/mhelton/code/nixos-handheld/boards/r36h/boot/uboot.img;
+    trust = /home/mhelton/code/nixos-handheld/boards/r36h/boot/trust.img;
   };
 
   # R36H uses the gameconsole-r36s device tree (same hardware)
