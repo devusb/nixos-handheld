@@ -60,7 +60,7 @@
   users.users.root.initialPassword = "nixos";
 
   # WiFi support (RTL8723BS via NetworkManager)
-  networking.wireless.enable = false;
+  networking.wireless.enable = lib.mkForce false;
   networking.networkmanager.enable = true;
 
   # Hardware graphics (Panfrost for Mali-G31 via Mesa)
