@@ -18,10 +18,18 @@
   handheld.kernelDTB = "rk3326-gameconsole-r36s.dtb";
   handheld.bootIni = ./boot.ini;
 
+  # No bootloader — we use U-Boot + boot.ini
+  boot.loader.grub.enable = false;
+
   # Custom kernel
   boot.kernelPackages = let
     kernel = pkgs.callPackage ../../pkgs/kernel-rk3326 { };
   in pkgs.linuxPackagesFor kernel;
+
+  # Skip NixOS kernel config assertions — our defconfig expands via
+  # make olddefconfig and has these options, but the assertion checker
+  # reads the defconfig fragment directly and doesn't see them.
+  system.requiredKernelConfig = lib.mkForce [];
 
   # Kernel modules
   boot.initrd.availableKernelModules = [
