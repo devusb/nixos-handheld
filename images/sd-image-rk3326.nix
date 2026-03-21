@@ -45,6 +45,11 @@ in
       type = lib.types.path;
       description = "Path to boot.ini U-Boot script";
     };
+
+    ubootDTB = lib.mkOption {
+      type = lib.types.path;
+      description = "Path to DTB for U-Boot's own display init (ArkOS BSP DTB)";
+    };
   };
 
   config = {
@@ -59,7 +64,7 @@ in
     '';
 
     boot.initrd.compressor = "gzip";
-    boot.initrd.supportedFilesystems = [ "btrfs" "vfat" ];
+    boot.initrd.supportedFilesystems = [ "ext4" "vfat" ];
 
     # sd-image.nix configuration
     sdImage = {
@@ -74,6 +79,7 @@ in
         cp ${config.system.build.uInitrd} firmware/uInitrd
         cp ${config.system.build.kernel}/dtbs/rockchip/${cfg.kernelDTB} firmware/${cfg.kernelDTB}
         cp ${cfg.bootIni} firmware/boot.ini
+        cp ${cfg.ubootDTB} firmware/gameconsole-r36s.dtb
       '';
 
       # Write U-Boot blobs to raw offsets and fix partition type

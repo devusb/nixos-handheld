@@ -14,10 +14,14 @@
     trust = /home/mhelton/code/nixos-handheld/boards/r36h/boot/trust.img;
   };
 
-  # R36H has KD35T133 panel — odroidgo2 DTB uses this panel driver
-  # (gameconsole-r36s.dtb uses st7703 which is wrong for this unit)
-  handheld.kernelDTB = "rk3326-odroid-go2.dtb";
+  # R36H uses gameconsole-r36s DTB from ohjhas kernel (st7703 panel)
+  # U-Boot also needs gameconsole-r36s.dtb (without rk3326- prefix) from
+  # ArkOS for its own display init — that's handled in sd-image-rk3326.nix
+  handheld.kernelDTB = "rk3326-gameconsole-r36s.dtb";
   handheld.bootIni = ./boot.ini;
+
+  # U-Boot needs its own DTB (ArkOS BSP) for display init before loading Linux
+  handheld.ubootDTB = /home/mhelton/misc/r36_boot/BOOT/gameconsole-r36s.dtb;
 
   # No bootloader — we use U-Boot + boot.ini
   boot.loader.grub.enable = false;
