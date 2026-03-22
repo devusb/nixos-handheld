@@ -60,6 +60,7 @@
   networking.networkmanager.enable = true;
 
   hardware.graphics.enable = true;
+  networking.firewall.enable = false;
   documentation.enable = false;
 
   environment.systemPackages = with pkgs; [
