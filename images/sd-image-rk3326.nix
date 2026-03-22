@@ -38,7 +38,13 @@ in
 
     kernelDTB = lib.mkOption {
       type = lib.types.str;
-      description = "Device tree blob filename (e.g., rk3326-gameconsole-r36s.dtb)";
+      description = "Device tree blob filename on the boot partition";
+    };
+
+    kernelDTBPath = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Path to a custom DTB file. If null, uses the kernel's built-in DTB from dtbs/rockchip/";
     };
 
     bootIni = lib.mkOption {
@@ -77,7 +83,10 @@ in
       populateFirmwareCommands = ''
         cp ${config.system.build.kernel}/${pkgs.stdenv.hostPlatform.linux-kernel.target} firmware/Image
         cp ${config.system.build.uInitrd} firmware/uInitrd
-        cp ${config.system.build.kernel}/dtbs/rockchip/${cfg.kernelDTB} firmware/${cfg.kernelDTB}
+        ${if cfg.kernelDTBPath != null
+          then "cp ${cfg.kernelDTBPath} firmware/${cfg.kernelDTB}"
+          else "cp ${config.system.build.kernel}/dtbs/rockchip/${cfg.kernelDTB} firmware/${cfg.kernelDTB}"
+        }
         cp ${cfg.bootIni} firmware/boot.ini
         cp ${cfg.ubootDTB} firmware/gameconsole-r36s.dtb
       '';
