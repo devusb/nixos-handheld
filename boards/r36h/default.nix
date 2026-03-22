@@ -38,6 +38,7 @@
   boot.kernelModules = [
     "rtl8723bs"
     "panfrost"
+    "g_ether"
   ];
 
   # WiFi and Bluetooth firmware
