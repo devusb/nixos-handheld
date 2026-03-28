@@ -104,6 +104,9 @@ in
           cp -r ${../../files/retroarch} ~/.config/retroarch
           chmod u+w -R ~/.config/retroarch
         fi
+        # Always update autoconfig
+        mkdir -p ~/.config/retroarch/autoconfig/udev
+        cp -f ${../../files/retroarch}/autoconfig/udev/*.cfg ~/.config/retroarch/autoconfig/udev/
         exec ${retroarchPkg}/bin/retroarch --verbose 2>&1
       '';
     };
@@ -111,9 +114,9 @@ in
 
   # Mount second SD card slot for ROMs
   fileSystems."/roms" = {
-    device = "/dev/mmcblk1p1";
-    fsType = "auto";
-    options = [ "nofail" "noauto" "x-systemd.automount" "x-systemd.device-timeout=5" ];
+    device = "/dev/mmcblk0p1";
+    fsType = "exfat";
+    options = [ "nofail" "noauto" "x-systemd.automount" "x-systemd.device-timeout=5" "uid=1000" "gid=100" "umask=0022" ];
   };
 
   # Networking
@@ -152,6 +155,7 @@ in
     description = "Dump hardware diagnostics";
     after = [ "multi-user.target" ];
     wantedBy = [ "multi-user.target" ];
+    path = with pkgs; [ util-linux coreutils iproute2 systemd kmod alsa-utils ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "hw-diag" ''
