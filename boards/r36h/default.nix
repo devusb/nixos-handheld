@@ -3,38 +3,37 @@
 { config, lib, pkgs, ... }:
 
 let
-  retroarchBare = (pkgs.retroarch-bare.override {
-    withWayland = false;
-  }).overrideAttrs (old: {
-    buildInputs = pkgs.lib.lists.subtractLists [
-      pkgs.ffmpeg_7
-      pkgs.pipewire
-      pkgs.qt6.qtbase
-      pkgs.wrapGAppsHook3
-    ] old.buildInputs;
-    nativeBuildInputs = pkgs.lib.remove
-      pkgs.qt6.wrapQtAppsHook
-      old.nativeBuildInputs;
-    configureFlags = (old.configureFlags or [ ]) ++ [
-      "--disable-pipewire"
-      "--disable-pulse"
-      "--disable-qt"
-      "--disable-wayland"
-      "--disable-x11"
-      "--disable-xinerama"
-      "--disable-xrandr"
-    ];
-  });
-
-  retroarchFull = pkgs.retroarch.override {
-    retroarch-bare = retroarchBare;
-  };
-
-  retroarchPkg = retroarchFull.withCores (cores: with cores; [
+  retroarchPkg = pkgs.retroarch.withCores (cores: with cores; [
     mgba
   ]);
 in
 {
+  nixpkgs.overlays = [
+    (final: prev: {
+      retroarch-bare = (prev.retroarch-bare.override {
+        withWayland = false;
+      }).overrideAttrs (old: {
+        buildInputs = final.lib.lists.subtractLists [
+          final.ffmpeg_7
+          final.pipewire
+          final.qt6.qtbase
+          final.wrapGAppsHook3
+        ] old.buildInputs;
+        nativeBuildInputs = final.lib.remove
+          final.qt6.wrapQtAppsHook
+          old.nativeBuildInputs;
+        configureFlags = (old.configureFlags or [ ]) ++ [
+          "--disable-pipewire"
+          "--disable-pulse"
+          "--disable-qt"
+          "--disable-wayland"
+          "--disable-x11"
+          "--disable-xinerama"
+          "--disable-xrandr"
+        ];
+      });
+    })
+  ];
   imports = [
     ../../images/sd-image-rk3326.nix
   ];
