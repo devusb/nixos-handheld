@@ -66,11 +66,11 @@ in
       Group = "users";
       Restart = "on-failure";
       RestartSec = "2";
+      RuntimeDirectory = "retroarch";
       Environment = [
-        "XDG_RUNTIME_DIR=/run/user/1000"
+        "XDG_RUNTIME_DIR=/run/retroarch"
         "HOME=/home/gamer"
       ];
-      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p /run/user/1000";
       ExecStart = pkgs.writeShellScript "start-retroarch" ''
         # Bootstrap config on first boot
         if [ ! -d ~/.config/retroarch ]; then
