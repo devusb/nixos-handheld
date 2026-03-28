@@ -64,8 +64,13 @@ in
     serviceConfig = {
       User = "gamer";
       Group = "users";
-      Restart = "always";
+      Restart = "on-failure";
       RestartSec = "2";
+      Environment = [
+        "XDG_RUNTIME_DIR=/run/user/1000"
+        "HOME=/home/gamer"
+      ];
+      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p /run/user/1000";
       ExecStart = pkgs.writeShellScript "start-retroarch" ''
         # Bootstrap config on first boot
         if [ ! -d ~/.config/retroarch ]; then
