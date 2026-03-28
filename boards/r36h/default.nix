@@ -10,6 +10,12 @@ in
 {
   nixpkgs.overlays = [
     (final: prev: {
+      retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig.overrideAttrs (old: {
+        postInstall = (old.postInstall or "") + ''
+          cp ${../../files/retroarch/autoconfig/udev/r36s_Gamepad.cfg} $out/share/libretro/autoconfig/udev/
+        '';
+      });
+
       retroarch-bare = (prev.retroarch-bare.override {
         withWayland = false;
       }).overrideAttrs (old: {
@@ -104,9 +110,6 @@ in
           cp -r ${../../files/retroarch} ~/.config/retroarch
           chmod u+w -R ~/.config/retroarch
         fi
-        # Always update autoconfig
-        mkdir -p ~/.config/retroarch/autoconfig/udev
-        cp -f ${../../files/retroarch}/autoconfig/udev/*.cfg ~/.config/retroarch/autoconfig/udev/
         exec ${retroarchPkg}/bin/retroarch --verbose 2>&1
       '';
     };
