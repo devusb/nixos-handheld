@@ -26,7 +26,11 @@ let
     ];
   });
 
-  retroarchPkg = retroarchBare.withCores (cores: with cores; [
+  retroarchFull = pkgs.retroarch.override {
+    retroarch-bare = retroarchBare;
+  };
+
+  retroarchPkg = retroarchFull.withCores (cores: with cores; [
     mgba
   ]);
 in
