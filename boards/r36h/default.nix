@@ -107,8 +107,8 @@ in
         "HOME=/home/gamer"
       ];
       ExecStart = pkgs.writeShellScript "start-retroarch" ''
-        # Bootstrap config on first boot
-        if [ ! -d ~/.config/retroarch ]; then
+        # Bootstrap config on first boot only — don't overwrite user changes
+        if [ ! -f ~/.config/retroarch/retroarch.cfg ]; then
           mkdir -p ~/.config
           cp -r ${../../files/retroarch} ~/.config/retroarch
           chmod u+w -R ~/.config/retroarch
