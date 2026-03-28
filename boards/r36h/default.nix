@@ -5,6 +5,9 @@
 let
   retroarchPkg = pkgs.retroarch.withCores (cores: with cores; [
     mgba
+    pcsx-rearmed
+    melonds
+    dosbox-pure
   ]);
 in
 {
@@ -109,6 +112,7 @@ in
           mkdir -p ~/.config
           cp -r ${../../files/retroarch} ~/.config/retroarch
           chmod u+w -R ~/.config/retroarch
+          chown -R gamer:users ~/.config/retroarch
         fi
         exec ${retroarchPkg}/bin/retroarch --verbose 2>&1
       '';
@@ -144,12 +148,31 @@ in
   # Debug tools
   environment.systemPackages = with pkgs; [
     retroarchPkg
+    alsa-utils
     htop
     usbutils
     evtest
     lsof
     pciutils
   ];
+
+  # Set safe default volume on boot (50%) — protects speakers
+  systemd.services.alsa-init = {
+    description = "Set default ALSA volume";
+    after = [ "sound.target" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ pkgs.alsa-utils ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "alsa-init" ''
+        amixer -c 0 sset 'Master' 50% 2>/dev/null || true
+        amixer -c 0 sset 'Headphone' 50% 2>/dev/null || true
+        amixer -c 0 sset 'Speaker' 50% 2>/dev/null || true
+        amixer -c 0 sset 'Playback' 50% 2>/dev/null || true
+      '';
+    };
+  };
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
