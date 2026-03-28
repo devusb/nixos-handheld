@@ -64,10 +64,6 @@ in
     serviceConfig = {
       User = "gamer";
       Group = "users";
-      PAMName = "login";
-      TTYPath = "/dev/tty1";
-      StandardInput = "tty";
-      StandardOutput = "tty";
       Restart = "always";
       RestartSec = "2";
       ExecStart = pkgs.writeShellScript "start-retroarch" ''
