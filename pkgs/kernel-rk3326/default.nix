@@ -17,6 +17,10 @@ linuxKernel.manualConfig {
       name = "rk3326-handheld-support";
       patch = ./patches/0001-rk3326-handheld-support.patch;
     }
+    {
+      name = "dwc2-force-host-mode";
+      patch = ./patches/0002-dwc2-force-host-mode.patch;
+    }
   ];
 
   extraMeta = {

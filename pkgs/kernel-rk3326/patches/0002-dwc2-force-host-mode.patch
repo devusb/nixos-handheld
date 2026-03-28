@@ -1,0 +1,10 @@
+--- a/drivers/usb/dwc2/core.c
++++ b/drivers/usb/dwc2/core.c
+@@ -581,6 +581,7 @@ void dwc2_force_dr_mode(struct dwc2_hsotg *hsotg)
+ 		 */
+ 		if (!dwc2_hw_is_otg(hsotg))
+ 			msleep(50);
++		dwc2_force_mode(hsotg, true);
+
+ 		break;
+ 	case USB_DR_MODE_PERIPHERAL:
