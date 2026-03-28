@@ -3,7 +3,30 @@
 { config, lib, pkgs, ... }:
 
 let
-  retroarchPkg = pkgs.retroarch.withCores (cores: with cores; [
+  retroarchBare = (pkgs.retroarch-bare.override {
+    withWayland = false;
+  }).overrideAttrs (old: {
+    buildInputs = pkgs.lib.lists.subtractLists [
+      pkgs.ffmpeg_7
+      pkgs.pipewire
+      pkgs.qt6.qtbase
+      pkgs.wrapGAppsHook3
+    ] old.buildInputs;
+    nativeBuildInputs = pkgs.lib.remove
+      pkgs.qt6.wrapQtAppsHook
+      old.nativeBuildInputs;
+    configureFlags = (old.configureFlags or [ ]) ++ [
+      "--disable-pipewire"
+      "--disable-pulse"
+      "--disable-qt"
+      "--disable-wayland"
+      "--disable-x11"
+      "--disable-xinerama"
+      "--disable-xrandr"
+    ];
+  });
+
+  retroarchPkg = retroarchBare.withCores (cores: with cores; [
     mgba
   ]);
 in
@@ -78,7 +101,7 @@ in
           cp -r ${../../files/retroarch} ~/.config/retroarch
           chmod u+w -R ~/.config/retroarch
         fi
-        exec ${retroarchPkg}/bin/retroarch
+        exec ${retroarchPkg}/bin/retroarch --verbose 2>&1
       '';
     };
   };
