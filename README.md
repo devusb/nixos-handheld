@@ -106,6 +106,17 @@ Create these directories on the roms card:
 - `packages.aarch64-linux.r36h-image` — flashable SD card image
 - `packages.aarch64-linux.linux-rk3326` — custom kernel package
 
+## References
+
+- [ohjhas/linux-stable-rk3326](https://github.com/ohjhas/linux-stable-rk3326) — Mainline kernel patches for RK3326 handhelds
+- [ROCKNIX](https://github.com/ROCKNIX/distribution) — Generic MIPI DSI panel driver, `importpanel.py`
+- [ArkOS-R3XS](https://github.com/AeolusUX/ArkOS-R3XS) — Boot blobs, DTBs, panel configurations for R36H
+- [dArkOS](https://github.com/christianhaitian/arkos) — Emulation stack and device support reference
+- [circuix-sword](https://github.com/jecaro/circuix-sword) — NixOS handheld gaming (RetroArch on DRM/KMS)
+- [Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS) — Overlay + modules structure
+- [nabam/nixos-rockchip](https://github.com/nabam/nixos-rockchip) — Rockchip NixOS SD image generation
+- [dArkOSRE-R36](https://github.com/southoz/dArkOSRE-R36) — R36H device configuration
+
 ## Design Documents
 
 - [Design spec](docs/design.md)
