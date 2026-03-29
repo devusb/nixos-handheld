@@ -9,6 +9,8 @@
   ];
 
   # Boot blobs extracted from working R36H ArkOS SD card
+  # Absolute paths required — files are gitignored, invisible to flake source
+  # Requires --impure until we build U-Boot from source or fetchurl them
   handheld.bootBlobs = {
     idbloader = /home/mhelton/code/nixos-handheld/boards/r36h/boot/idbloader.img;
     uboot = /home/mhelton/code/nixos-handheld/boards/r36h/boot/uboot.img;
@@ -21,14 +23,13 @@
   handheld.bootIni = ./boot.ini;
 
   # U-Boot DTB: ArkOS BSP for U-Boot's own display init
-  handheld.ubootDTB = /home/mhelton/misc/r36_boot/BOOT/gameconsole-r36s.dtb;
-
-  # No bootloader — U-Boot + boot.ini
-  boot.loader.grub.enable = false;
+  handheld.ubootDTB = ./dtb/gameconsole-r36s.dtb;
 
   # Custom kernel
   boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux-rk3326;
 
+  # Custom defconfig covers all required options via make olddefconfig,
+  # but NixOS assertion checker reads the fragment directly and doesn't see them
   system.requiredKernelConfig = lib.mkForce [];
 
   # Kernel modules
@@ -43,7 +44,10 @@
   fileSystems."/roms" = {
     device = "/dev/mmcblk0p1";
     fsType = "exfat";
-    options = [ "nofail" "noauto" "x-systemd.automount" "x-systemd.device-timeout=5" "uid=1000" "gid=100" "umask=0022" ];
+    options = [
+      "nofail" "noauto" "x-systemd.automount" "x-systemd.device-timeout=5"
+      "uid=${toString config.users.users.gamer.uid}" "gid=100" "umask=0022"
+    ];
   };
 
   # Networking
@@ -61,6 +65,8 @@
   };
   users.users.root.initialPassword = "nixos";
 
+  # Kiosk mode — RetroArch owns the display
+  console.enable = false;
   documentation.enable = false;
 
   # Debug tools

@@ -7,12 +7,10 @@ let
   };
 in
 {
-  # No virtual consoles — RetroArch owns the display
-  console.enable = false;
-
   # Gamer user — runs RetroArch
   users.users.gamer = {
     isNormalUser = true;
+    uid = 1000;
     extraGroups = [ "input" "video" "audio" ];
   };
 
@@ -32,6 +30,9 @@ in
         "HOME=/home/gamer"
       ];
       ExecStart = "${lib.getExe retroarchPkg} --verbose";
+      # Clean quit (exit 0) triggers poweroff — this is intentional for kiosk mode.
+      # Crashes (signals) trigger restart via on-abnormal.
+      # To debug without shutdown: systemctl mask retroarch-poweroff.service
       ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
     };
   };
