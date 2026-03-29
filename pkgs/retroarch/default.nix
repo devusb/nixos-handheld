@@ -15,6 +15,9 @@ retroarch-bare.wrapper {
     fbneo
     melonds
     dosbox-pure
+    mupen64plus
+    opera
+    mame2003-plus
   ];
   inherit settings;
 }
