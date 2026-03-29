@@ -36,4 +36,9 @@
   ];
 
   powerManagement.cpuFreqGovernor = "ondemand";
+
+  # Minimize SD card writes
+  boot.tmp.useTmpfs = true;
+  services.journald.extraConfig = "Storage=volatile";
+  boot.kernel.sysctl."vm.swappiness" = 0;
 }
