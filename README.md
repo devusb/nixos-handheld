@@ -12,15 +12,19 @@ NixOS-based gaming OS for ARM handheld devices. Currently supports the **Game Co
 
 ## Building
 
-Requires an aarch64 remote builder (e.g., Apple Silicon Mac, ARM server):
+Requires an aarch64 remote builder or native aarch64 machine:
 
 ```bash
-nix build .#packages.x86_64-linux.r36h-image \
-  --builders 'ssh-ng://nix@your-builder aarch64-linux - - - big-parallel,kvm,nixos-test' \
-  --impure --max-jobs 0
+# Build on remote store (recommended)
+nix build --eval-store auto --store ssh-ng://nix@your-builder \
+  .#packages.aarch64-linux.r36h-image --impure
+
+# Copy result back
+nix copy --no-check-sigs --from ssh-ng://nix@your-builder \
+  $(nix eval --raw .#packages.aarch64-linux.r36h-image --impure)
 ```
 
-The image is at `result/sd-image/nixos-image-sd-card-*.img.zst`.
+The `--impure` flag is required because boot blobs are not tracked in git (see Prerequisites below).
 
 ## Flashing
 
@@ -31,62 +35,78 @@ sudo dd if=nixos-r36h.img of=/dev/sdX bs=4M status=progress conv=fsync
 
 ## Prerequisites — Files from a Working ArkOS/ArkOS-R3XS SD Card
 
-The build requires boot blobs extracted from a working ArkOS installation. These cannot be generated from source yet (Phase 2 goal).
+The build requires U-Boot boot blobs extracted from a working ArkOS installation. These cannot be generated from source yet.
 
 ### Boot blobs
 
 Extract from a working ArkOS SD card (the system card, not the roms card):
 
 ```bash
-# With the ArkOS SD card at /dev/sdX:
 mkdir -p boards/r36h/boot
 sudo dd if=/dev/sdX of=boards/r36h/boot/idbloader.img bs=512 skip=64 count=8000
 sudo dd if=/dev/sdX of=boards/r36h/boot/uboot.img bs=512 skip=16384 count=8192
 sudo dd if=/dev/sdX of=boards/r36h/boot/trust.img bs=512 skip=24576 count=8192
 ```
 
-### U-Boot DTB
-
-Copy `gameconsole-r36s.dtb` from the ArkOS boot partition (FAT32, first partition):
-
-```bash
-# Mount the ArkOS boot partition
-sudo mount /dev/sdX1 /mnt
-# The file is at /mnt/gameconsole-r36s.dtb (no rk3326- prefix)
-```
-
-Update the path in `boards/r36h/default.nix` (`handheld.ubootDTB`).
-
 ### Panel init sequence (already included)
 
-The display panel init sequence was extracted from the ArkOS DTB using ROCKNIX's `importpanel.py` and is baked into `boards/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb`. No action needed unless your R36H has a different panel variant.
+The display panel init sequence was extracted from the ArkOS DTB using ROCKNIX's `importpanel.py` and is baked into `boards/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb`. No action needed unless your R36H has a different panel variant (see the [R36S panel lottery](https://rocknix.org/devices/unbranded/game-console-r35s-r36s/)).
 
 ## ROMs
 
-Put ROMs on a separate SD card (exFAT formatted, single partition) in the R36H's second card slot. They mount at `/roms`. BIOS files go in `/roms/system/`.
+Put ROMs on a separate SD card (exFAT formatted, single partition) in the R36H's second card slot. They mount at `/roms`.
+
+Create these directories on the roms card:
+- `/roms/saves` — save files
+- `/roms/states` — save states
+- `/roms/bios` — BIOS files (e.g., `scph1001.bin` for PSX)
+
+## Controls
+
+- **Start + Select** — open RetroArch quick menu
+- **Volume Up / Down** — adjust audio volume
+- **Power button (short press)** — suspend
+- **Power button (long press)** — force power off
+- **Quit RetroArch** (from main menu) — clean shutdown
 
 ## What Works
 
-- Display (640x480, Panfrost GL 3.1)
-- RetroArch with rgui menu
+- Display (640x480, Panfrost GL, brightness control)
+- RetroArch with rgui menu (direct DRM/KMS, no compositor)
 - Gamepad (buttons + dual analog sticks)
-- Audio (speaker + headphone)
-- Volume buttons
-- GBA (mgba), PSX (pcsx-rearmed), NDS (melonds), DOS (dosbox-pure)
-- Second SD card for ROMs (exFAT)
-- Start+Select opens RetroArch quick menu
+- Audio (speaker + headphone, volume buttons)
+- Suspend / resume (power button)
+- Clean shutdown (quit RetroArch)
+- GBA, GB/GBC, SNES, Genesis/Game Gear/Master System, NES, PSX, Neo Geo Pocket Color, arcade (FBNeo), DOS, NDS (slow)
+- Second SD card for ROMs (exFAT, automount)
+- Saves and states on roms card (survive reflash)
 
 ## What Doesn't Work
 
-- USB (host mode error -71, gadget mode no data)
+- USB host (error -71, likely kernel 6.12 dwc2 regression)
+- USB gadget (g_ether loads but host doesn't see device)
 - WiFi (no hardware on most R36H units)
-- Brightness control (not configured yet)
-- Sleep/suspend (not configured yet)
+- NDS at full speed (melonds ~15fps, needs DraStic which requires armhf)
 
 ## Architecture
 
-- **Kernel**: Mainline stable + ohjhas RK3326 patches
+- **Kernel**: Mainline stable + [ohjhas RK3326 patches](https://github.com/ohjhas/linux-stable-rk3326)
 - **GPU**: Panfrost (open-source Mali-G31 driver via Mesa)
 - **Display**: ROCKNIX generic-dsi panel driver with NV3051D init sequence
 - **Boot**: ArkOS U-Boot blobs → boot.ini → kernel + uInitrd + DTB
+- **RetroArch**: Custom build (no X11/Wayland/Pulse/Qt), ODROIDGO2 brightness patch
 - **Image**: NixOS sd-image.nix with custom firmware partition and U-Boot injection
+- **Structure**: [Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS)-style overlay + modules
+
+## Flake Outputs
+
+- `nixosConfigurations.r36h` — full NixOS system configuration
+- `nixosModules.default` — shared modules (retroarch, hardware, diagnostics)
+- `overlays.default` — custom packages (kernel, retroarch)
+- `packages.aarch64-linux.r36h-image` — flashable SD card image
+- `packages.aarch64-linux.linux-rk3326` — custom kernel package
+
+## Design Documents
+
+- [Design spec](docs/design.md)
+- [M1 implementation plan](docs/m1-plan.md)
