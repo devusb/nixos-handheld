@@ -3,12 +3,17 @@
 { config, lib, pkgs, ... }:
 
 let
-  retroarchPkg = pkgs.retroarch.withCores (cores: with cores; [
-    mgba
-    pcsx-rearmed
-    melonds
-    dosbox-pure
-  ]);
+  retroarchSettings = import ../../files/retroarch/settings.nix;
+
+  retroarchPkg = pkgs.retroarch-bare.wrapper {
+    cores = with pkgs.libretro; [
+      mgba
+      pcsx-rearmed
+      melonds
+      dosbox-pure
+    ];
+    settings = retroarchSettings;
+  };
 in
 {
   nixpkgs.overlays = [
@@ -106,16 +111,7 @@ in
         "XDG_RUNTIME_DIR=/run/retroarch"
         "HOME=/home/gamer"
       ];
-      ExecStart = pkgs.writeShellScript "start-retroarch" ''
-        # Bootstrap config on first boot only — don't overwrite user changes
-        if [ ! -f ~/.config/retroarch/retroarch.cfg ]; then
-          mkdir -p ~/.config
-          cp -r ${../../files/retroarch} ~/.config/retroarch
-          chmod u+w -R ~/.config/retroarch
-          chown -R gamer:users ~/.config/retroarch
-        fi
-        exec ${retroarchPkg}/bin/retroarch --verbose 2>&1
-      '';
+      ExecStart = "${retroarchPkg}/bin/retroarch --verbose";
     };
   };
 
