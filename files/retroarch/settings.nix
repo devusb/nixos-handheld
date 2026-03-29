@@ -17,7 +17,7 @@
   content_show_music = "false";
   content_show_video = "false";
   content_show_netplay = "false";
-  menu_show_quit_retroarch = "false";
+  menu_show_quit_retroarch = "true";
   menu_show_shutdown = "false";
 
   # Hotkeys

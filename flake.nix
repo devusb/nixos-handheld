@@ -11,10 +11,9 @@
     in
     {
       nixosConfigurations.r36h = nixpkgs.lib.nixosSystem {
-        # Builds for aarch64 — use binfmt or remote builder:
-        #   --builders 'ssh-ng://nix@superintendent aarch64-linux - - - big-parallel,kvm,nixos-test'
         system = "aarch64-linux";
         modules = [
+          { nixpkgs.config.allowUnfree = true; }
           ./boards/r36h
         ];
       };

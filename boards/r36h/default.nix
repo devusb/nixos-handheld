@@ -8,7 +8,13 @@ let
   retroarchPkg = pkgs.retroarch-bare.wrapper {
     cores = with pkgs.libretro; [
       mgba
+      gambatte
+      beetle-ngp
+      snes9x
+      genesis-plus-gx
+      fceumm
       pcsx-rearmed
+      fbneo
       melonds
       dosbox-pure
     ];
@@ -87,8 +93,8 @@ in
   # Firmware
   hardware.enableRedistributableFirmware = true;
 
-  # Auto-login on tty1 (fallback if RetroArch fails)
-  services.getty.autologinUser = "root";
+  # No virtual consoles — RetroArch owns the display
+  console.enable = false;
 
   # Gamer user — runs RetroArch
   users.users.gamer = {
@@ -111,7 +117,8 @@ in
         "XDG_RUNTIME_DIR=/run/retroarch"
         "HOME=/home/gamer"
       ];
-      ExecStart = "${retroarchPkg}/bin/retroarch --verbose";
+      ExecStart = "${lib.getExe retroarchPkg} --verbose";
+      ExecStopPost = "${lib.getExe' pkgs.systemd "systemctl"} poweroff";
     };
   };
 
@@ -140,6 +147,9 @@ in
   # GPU
   hardware.graphics.enable = true;
   documentation.enable = false;
+
+  # Power button = suspend, RetroArch menu has Shutdown for poweroff
+  services.logind.settings.Login.HandlePowerKey = "suspend";
 
   # Debug tools
   environment.systemPackages = with pkgs; [
