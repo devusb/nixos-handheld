@@ -51,6 +51,9 @@ in
           "--disable-xinerama"
           "--disable-xrandr"
         ];
+        patches = (old.patches or []) ++ [
+          ../../pkgs/retroarch/odroidgo2-features.patch
+        ];
       });
     })
   ];
@@ -110,7 +113,7 @@ in
     serviceConfig = {
       User = "gamer";
       Group = "users";
-      Restart = "on-failure";
+      Restart = "on-abnormal";
       RestartSec = "2";
       RuntimeDirectory = "retroarch";
       Environment = [

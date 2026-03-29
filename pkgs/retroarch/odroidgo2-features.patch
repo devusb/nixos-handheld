@@ -1,0 +1,43 @@
+Enable brightness control and shutdown/reboot menu items
+without requiring HAVE_LAKKA or HAVE_ODROIDGO2.
+
+--- a/frontend/drivers/platform_unix.c
++++ b/frontend/drivers/platform_unix.c
+@@ -1446,6 +1446,8 @@
+    pclose(command_file);
+ }
+
++#endif
++#if 1
+ static void frontend_unix_set_screen_brightness(int value)
+ {
+    char *buffer = NULL;
+@@ -2191,7 +2193,7 @@
+    android_app_destroy(android_app);
+ #endif
+
+-#ifdef HAVE_LAKKA
++#if 1
+    /* Reset brightness to maximum */
+    if (settings->uints.screen_brightness != DEFAULT_SCREEN_BRIGHTNESS)
+       frontend_unix_set_screen_brightness(DEFAULT_SCREEN_BRIGHTNESS);
+@@ -3370,7 +3372,7 @@
+ #else
+    NULL,                               /* get_lakka_version */
+ #endif
+-#if defined(HAVE_LAKKA_SWITCH) || (defined(HAVE_LAKKA) && defined(HAVE_ODROIDGO2))
++#if 1
+    frontend_unix_set_screen_brightness,/* set_screen_brightness */
+ #else
+    NULL,                         /* set_screen_brightness */
+--- a/menu/menu_setting.c
++++ b/menu/menu_setting.c
+@@ -10718,7 +10718,7 @@
+               parent_group);
+ #endif
+
+-#if defined(HAVE_LAKKA)
++#if 1
+          CONFIG_ACTION(
+                list, list_info,
+                MENU_ENUM_LABEL_REBOOT,
