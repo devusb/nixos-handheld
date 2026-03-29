@@ -2,15 +2,9 @@
 # R36H is electrically identical to R36S (landscape shell variant)
 { config, lib, pkgs, ... }:
 
-let
-  retroarchSettings = import ../../files/retroarch/settings.nix;
-
-  retroarchPkg = pkgs.callPackage ../../pkgs/retroarch {
-    settings = retroarchSettings;
-  };
-in
 {
   imports = [
+    ../../modules
     ../../images/sd-image-rk3326.nix
   ];
 
@@ -33,50 +27,17 @@ in
   boot.loader.grub.enable = false;
 
   # Custom kernel
-  boot.kernelPackages = let
-    kernel = pkgs.callPackage ../../pkgs/kernel-rk3326 { };
-  in pkgs.linuxPackagesFor kernel;
+  boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux-rk3326;
 
   system.requiredKernelConfig = lib.mkForce [];
 
   # Kernel modules
   boot.initrd.includeDefaultModules = false;
   boot.initrd.availableKernelModules = lib.mkForce [ ];
-  boot.kernelModules = [
-    "panfrost"
-  ];
+  boot.kernelModules = [ "panfrost" ];
 
   # Firmware
   hardware.enableRedistributableFirmware = true;
-
-  # No virtual consoles — RetroArch owns the display
-  console.enable = false;
-
-  # Gamer user — runs RetroArch
-  users.users.gamer = {
-    isNormalUser = true;
-    extraGroups = [ "input" "video" "audio" ];
-  };
-
-  # RetroArch as systemd service — direct DRM/KMS, no compositor
-  systemd.services.retroarch = {
-    description = "RetroArch";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-user-sessions.service" ];
-    serviceConfig = {
-      User = "gamer";
-      Group = "users";
-      Restart = "on-abnormal";
-      RestartSec = "2";
-      RuntimeDirectory = "retroarch";
-      Environment = [
-        "XDG_RUNTIME_DIR=/run/retroarch"
-        "HOME=/home/gamer"
-      ];
-      ExecStart = "${lib.getExe retroarchPkg} --verbose";
-      ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
-    };
-  };
 
   # Mount second SD card slot for ROMs
   fileSystems."/roms" = {
@@ -100,118 +61,16 @@ in
   };
   users.users.root.initialPassword = "nixos";
 
-  # GPU
-  hardware.graphics.enable = true;
-
-  # Allow video group to control backlight
-  services.udev.extraRules = ''
-    ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
-    ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness"
-  '';
   documentation.enable = false;
-
-  # Power button = suspend, RetroArch menu has Shutdown for poweroff
-  services.logind.settings.Login.HandlePowerKey = "suspend";
 
   # Debug tools
   environment.systemPackages = with pkgs; [
-    retroarchPkg
-    alsa-utils
     htop
     usbutils
     evtest
     lsof
     pciutils
   ];
-
-  # Set safe default volume on boot (50%) — protects speakers
-  systemd.services.alsa-init = {
-    description = "Set default ALSA volume";
-    after = [ "sound.target" ];
-    wantedBy = [ "multi-user.target" ];
-    path = [ pkgs.alsa-utils ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = pkgs.writeShellScript "alsa-init" ''
-        amixer -c 0 sset 'Master' 50% 2>/dev/null || true
-        amixer -c 0 sset 'Headphone' 50% 2>/dev/null || true
-        amixer -c 0 sset 'Speaker' 50% 2>/dev/null || true
-        amixer -c 0 sset 'Playback' 50% 2>/dev/null || true
-      '';
-    };
-  };
-
-  powerManagement.cpuFreqGovernor = "ondemand";
-
-  # Diagnostics service — dumps hardware info on every boot
-  systemd.services.hardware-diagnostics = {
-    description = "Dump hardware diagnostics";
-    after = [ "multi-user.target" ];
-    wantedBy = [ "multi-user.target" ];
-    path = with pkgs; [ util-linux coreutils iproute2 systemd kmod alsa-utils ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = pkgs.writeShellScript "hw-diag" ''
-        mkdir -p /var/log
-        {
-          echo "=== NixOS Hardware Diagnostics ==="
-          echo "Date: $(date)"
-          echo ""
-
-          echo "=== uname ==="
-          uname -a
-          echo ""
-
-          echo "=== Backlight ==="
-          ls -la /sys/class/backlight/backlight/brightness 2>/dev/null
-          cat /sys/class/backlight/backlight/brightness 2>/dev/null
-          cat /sys/class/backlight/backlight/max_brightness 2>/dev/null
-          echo ""
-
-          echo "=== Input devices ==="
-          cat /proc/bus/input/devices 2>/dev/null
-          echo ""
-
-          echo "=== Audio: aplay ==="
-          aplay -l 2>/dev/null || echo "aplay not available"
-          echo ""
-
-          echo "=== GPU: DRI devices ==="
-          ls -la /dev/dri/ 2>/dev/null || echo "no /dev/dri"
-          echo ""
-
-          echo "=== GPU: panfrost ==="
-          dmesg | grep -i "panfrost\|gpu\|mali\|drm" 2>/dev/null
-          echo ""
-
-          echo "=== Loaded modules ==="
-          lsmod 2>/dev/null
-          echo ""
-
-          echo "=== systemctl failed ==="
-          systemctl --failed --no-pager 2>/dev/null
-          echo ""
-
-          echo "=== RetroArch service ==="
-          systemctl status retroarch --no-pager 2>/dev/null
-          echo ""
-
-          echo "=== Mount points ==="
-          mount 2>/dev/null
-          echo ""
-
-          echo "=== Block devices ==="
-          lsblk 2>/dev/null
-          echo ""
-
-          echo "=== full dmesg ==="
-          dmesg
-
-        } > /var/log/diagnostics.txt 2>&1
-      '';
-    };
-  };
 
   system.stateVersion = "25.05";
 }
