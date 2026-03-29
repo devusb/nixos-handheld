@@ -18,7 +18,8 @@
   content_show_video = "false";
   content_show_netplay = "false";
   menu_show_quit_retroarch = "true";
-  menu_show_shutdown = "false";
+  menu_show_shutdown = "true";
+  menu_show_reboot = "true";
 
   # Hotkeys
   input_menu_toggle_btn = "nul";

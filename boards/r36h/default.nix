@@ -121,7 +121,7 @@ in
         "HOME=/home/gamer"
       ];
       ExecStart = "${lib.getExe retroarchPkg} --verbose";
-      ExecStopPost = "${lib.getExe' pkgs.systemd "systemctl"} poweroff";
+      ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
     };
   };
 
@@ -149,6 +149,12 @@ in
 
   # GPU
   hardware.graphics.enable = true;
+
+  # Allow video group to control backlight
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+    ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness"
+  '';
   documentation.enable = false;
 
   # Power button = suspend, RetroArch menu has Shutdown for poweroff
@@ -202,6 +208,12 @@ in
 
           echo "=== uname ==="
           uname -a
+          echo ""
+
+          echo "=== Backlight ==="
+          ls -la /sys/class/backlight/backlight/brightness 2>/dev/null
+          cat /sys/class/backlight/backlight/brightness 2>/dev/null
+          cat /sys/class/backlight/backlight/max_brightness 2>/dev/null
           echo ""
 
           echo "=== Input devices ==="
