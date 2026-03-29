@@ -1,11 +1,18 @@
 # R36H board definition — RK3326-based handheld gaming device
 # R36H is electrically identical to R36S (landscape shell variant)
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, modulesPath, ... }:
 
 {
   imports = [
     ../../modules
     ../../images/sd-image-rk3326.nix
+    "${modulesPath}/profiles/minimal.nix"
+  ];
+
+  # Disable default hardware/base profiles — we specify hardware explicitly
+  disabledModules = [
+    "${modulesPath}/profiles/all-hardware.nix"
+    "${modulesPath}/profiles/base.nix"
   ];
 
   # Boot blobs extracted from working R36H ArkOS SD card
@@ -50,19 +57,10 @@
     ];
   };
 
-  # Networking
+  # Networking — no WiFi hardware on this unit
   networking.hostName = "r36h";
-  networking.wireless.enable = lib.mkForce false;
-  networking.networkmanager.enable = true;
   networking.firewall.enable = false;
-  systemd.services.NetworkManager-wait-online.enable = false;
-  systemd.network.wait-online.anyInterface = true;
 
-  # SSH (for future use if we get networking)
-  services.openssh = {
-    enable = true;
-    settings.PermitRootLogin = "yes";
-  };
   users.users.root.initialPassword = "nixos";
 
   # Kiosk mode — RetroArch owns the display
