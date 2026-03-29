@@ -6,7 +6,7 @@
 #   - FAT32 firmware partition repurposed for boot.ini + kernel + uInitrd + DTB
 #   - Partition layout matching RK3326 boot expectations
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, modulesPath, ... }:
 
 let
   cfg = config.handheld;
@@ -17,7 +17,7 @@ let
 in
 {
   imports = [
-    <nixpkgs/nixos/modules/installer/sd-card/sd-image.nix>
+    "${modulesPath}/installer/sd-card/sd-image.nix"
   ];
 
   options.handheld = {
