@@ -11,7 +11,6 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ self.overlays.default ];
       };
     in
     {
@@ -29,8 +28,7 @@
 
       packages.${system} = {
         r36h-image = self.nixosConfigurations.r36h.config.system.build.sdImage;
-        linux-rk3326 = pkgs.linux-rk3326;
-        retroarch-handheld = pkgs.retroarch-handheld;
+        linux-rk3326 = pkgs.callPackage ./pkgs/kernel-rk3326 { };
       };
     };
 }
