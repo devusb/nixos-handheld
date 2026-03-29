@@ -10,7 +10,6 @@ final: prev: {
   retroarch-bare = (prev.retroarch-bare.override {
     withWayland = false;
   }).overrideAttrs (old: {
-    # Remove unnecessary dependencies (fragile — may need updating on nixpkgs bumps)
     buildInputs = final.lib.lists.subtractLists [
       final.ffmpeg_7
       final.pipewire
@@ -36,7 +35,9 @@ final: prev: {
 
   retroarch-handheld = final.callPackage ./pkgs/retroarch { };
 
-  # Strip SDL3 of desktop dependencies — saves ~2.7GB (GTK4, gstreamer, pipewire)
+  alsa-utils = prev.alsa-utils.override { withPipewireLib = false; };
+
+  # Strip SDL3 of desktop dependencies
   sdl3 = (prev.sdl3.override {
     libdecorSupport = false;
     pipewireSupport = false;

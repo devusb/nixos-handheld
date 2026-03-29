@@ -59,6 +59,7 @@
 
   # Networking — no WiFi hardware on this unit
   networking.hostName = "r36h";
+  networking.useDHCP = false;
   networking.firewall.enable = false;
 
   users.users.root.initialPassword = "nixos";
