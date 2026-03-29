@@ -16,6 +16,7 @@ retroarch-bare.wrapper {
     melonds
     dosbox-pure
     mupen64plus
+    parallel-n64
     opera
     mame2003-plus
   ];
