@@ -35,7 +35,7 @@
     alsa-utils
   ];
 
-  powerManagement.cpuFreqGovernor = "performance";
+  powerManagement.cpuFreqGovernor = "ondemand";
 
   # Minimize SD card writes
   boot.tmp.useTmpfs = true;
