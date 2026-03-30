@@ -117,7 +117,9 @@ Create these directories on the roms card:
 - [nabam/nixos-rockchip](https://github.com/nabam/nixos-rockchip) — Rockchip NixOS SD image generation
 - [dArkOSRE-R36](https://github.com/southoz/dArkOSRE-R36) — R36H device configuration
 
-## Design Documents
+## Documentation
 
+- [Extracting files from ArkOS](docs/extracting-from-arkos.md) — how to get the boot blobs, U-Boot DTB, and panel init
+- [Generating the panel DTB](docs/panel-dtb.md) — regenerate the display DTB for a different panel variant
 - [Design spec](docs/design.md)
 - [M1 implementation plan](docs/m1-plan.md)
