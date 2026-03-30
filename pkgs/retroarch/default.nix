@@ -19,6 +19,7 @@ retroarch-bare.wrapper {
     parallel-n64
     opera
     mame2003-plus
+    scummvm
   ];
   inherit settings;
 }
