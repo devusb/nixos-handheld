@@ -96,15 +96,15 @@ Create these directories on the roms card:
 - **Boot**: ArkOS U-Boot blobs → boot.ini → kernel + uInitrd + DTB
 - **RetroArch**: Custom build (no X11/Wayland/Pulse/Qt), ODROIDGO2 brightness patch
 - **Image**: NixOS sd-image.nix with custom firmware partition and U-Boot injection
-- **Structure**: [Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS)-style overlay + modules
+- **Structure**: overlay + modules + legacyPackages ([Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS) pattern)
 
 ## Flake Outputs
 
 - `nixosConfigurations.r36h` — full NixOS system configuration
 - `nixosModules.default` — shared modules (retroarch, hardware, diagnostics)
-- `overlays.default` — custom packages (kernel, retroarch)
+- `overlays.default` — custom packages
+- `legacyPackages.aarch64-linux` — full nixpkgs set with overlay applied
 - `packages.aarch64-linux.r36h-image` — flashable SD card image
-- `packages.aarch64-linux.linux-rk3326` — custom kernel package
 
 ## References
 
