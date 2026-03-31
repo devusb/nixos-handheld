@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   retroarchSettings = import ./settings.nix;
@@ -11,7 +16,11 @@ in
   users.users.gamer = {
     isNormalUser = true;
     uid = 1000;
-    extraGroups = [ "input" "video" "audio" ];
+    extraGroups = [
+      "input"
+      "video"
+      "audio"
+    ];
   };
 
   # RetroArch as systemd service — direct DRM/KMS, no compositor

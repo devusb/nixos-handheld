@@ -1,4 +1,9 @@
-{ lib, fetchurl, linuxKernel, ... }:
+{
+  lib,
+  fetchurl,
+  linuxKernel,
+  ...
+}:
 
 linuxKernel.manualConfig {
   version = "6.12.74";

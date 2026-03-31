@@ -6,14 +6,20 @@
 #   - FAT32 firmware partition repurposed for boot.ini + kernel + uInitrd + DTB
 #   - Partition layout matching RK3326 boot expectations
 
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 let
   cfg = config.handheld;
 
-  idbloaderOffset = 64;    # sector 64 = 32 KB
-  ubootOffset = 16384;     # sector 16384 = 8 MB
-  trustOffset = 24576;      # sector 24576 = 12 MB
+  idbloaderOffset = 64; # sector 64 = 32 KB
+  ubootOffset = 16384; # sector 16384 = 8 MB
+  trustOffset = 24576; # sector 24576 = 12 MB
 in
 {
   imports = [
@@ -60,17 +66,23 @@ in
 
   config = {
     # uInitrd: wrap NixOS initrd in uImage format for U-Boot
-    system.build.uInitrd = pkgs.runCommand "uInitrd" {
-      nativeBuildInputs = [ pkgs.ubootTools ];
-    } ''
-      # -A arm (not arm64) — matches working ArkOS uInitrd header
-      mkimage -A arm -O linux -T ramdisk -C gzip \
-        -d ${config.system.build.initialRamdisk}/initrd \
-        $out
-    '';
+    system.build.uInitrd =
+      pkgs.runCommand "uInitrd"
+        {
+          nativeBuildInputs = [ pkgs.ubootTools ];
+        }
+        ''
+          # -A arm (not arm64) — matches working ArkOS uInitrd header
+          mkimage -A arm -O linux -T ramdisk -C gzip \
+            -d ${config.system.build.initialRamdisk}/initrd \
+            $out
+        '';
 
     boot.initrd.compressor = "gzip";
-    boot.initrd.supportedFilesystems = [ "ext4" "vfat" ];
+    boot.initrd.supportedFilesystems = [
+      "ext4"
+      "vfat"
+    ];
 
     # sd-image.nix configuration
     sdImage = {
@@ -83,9 +95,11 @@ in
       populateFirmwareCommands = ''
         cp ${config.system.build.kernel}/${pkgs.stdenv.hostPlatform.linux-kernel.target} firmware/Image
         cp ${config.system.build.uInitrd} firmware/uInitrd
-        ${if cfg.kernelDTBPath != null
-          then "cp ${cfg.kernelDTBPath} firmware/${cfg.kernelDTB}"
-          else "cp ${config.system.build.kernel}/dtbs/rockchip/${cfg.kernelDTB} firmware/${cfg.kernelDTB}"
+        ${
+          if cfg.kernelDTBPath != null then
+            "cp ${cfg.kernelDTBPath} firmware/${cfg.kernelDTB}"
+          else
+            "cp ${config.system.build.kernel}/dtbs/rockchip/${cfg.kernelDTB} firmware/${cfg.kernelDTB}"
         }
         cp ${cfg.bootIni} firmware/boot.ini
         cp ${cfg.ubootDTB} firmware/gameconsole-r36s.dtb

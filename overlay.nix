@@ -7,31 +7,31 @@ final: prev: {
     '';
   });
 
-  retroarch-bare = (prev.retroarch-bare.override {
-    withWayland = false;
-  }).overrideAttrs (old: {
-    buildInputs = final.lib.lists.subtractLists [
-      final.ffmpeg_7
-      final.pipewire
-      final.qt6.qtbase
-      final.wrapGAppsHook3
-    ] old.buildInputs;
-    nativeBuildInputs = final.lib.remove
-      final.qt6.wrapQtAppsHook
-      old.nativeBuildInputs;
-    configureFlags = (old.configureFlags or [ ]) ++ [
-      "--disable-pipewire"
-      "--disable-pulse"
-      "--disable-qt"
-      "--disable-wayland"
-      "--disable-x11"
-      "--disable-xinerama"
-      "--disable-xrandr"
-    ];
-    patches = (old.patches or [ ]) ++ [
-      ./pkgs/retroarch/odroidgo2-features.patch
-    ];
-  });
+  retroarch-bare =
+    (prev.retroarch-bare.override {
+      withWayland = false;
+    }).overrideAttrs
+      (old: {
+        buildInputs = final.lib.lists.subtractLists [
+          final.ffmpeg_7
+          final.pipewire
+          final.qt6.qtbase
+          final.wrapGAppsHook3
+        ] old.buildInputs;
+        nativeBuildInputs = final.lib.remove final.qt6.wrapQtAppsHook old.nativeBuildInputs;
+        configureFlags = (old.configureFlags or [ ]) ++ [
+          "--disable-pipewire"
+          "--disable-pulse"
+          "--disable-qt"
+          "--disable-wayland"
+          "--disable-x11"
+          "--disable-xinerama"
+          "--disable-xrandr"
+        ];
+        patches = (old.patches or [ ]) ++ [
+          ./pkgs/retroarch/odroidgo2-features.patch
+        ];
+      });
 
   retroarch-handheld = final.callPackage ./pkgs/retroarch { };
 
@@ -39,7 +39,9 @@ final: prev: {
 
   libretro = prev.libretro // {
     parallel-n64 = prev.libretro.parallel-n64.overrideAttrs (old: {
-      meta = old.meta // { badPlatforms = [ ]; };
+      meta = old.meta // {
+        badPlatforms = [ ];
+      };
       postPatch = (old.postPatch or "") + ''
         sed -i 's/static void nullf() {}/static void nullf(...) {}/' mupen64plus-core/src/r4300/new_dynarec/new_dynarec_64.c
         # Fix R_AARCH64_CONDBR19 — conditional branch out of range to invalidate_block
@@ -50,14 +52,16 @@ final: prev: {
   };
 
   # Strip SDL3 of desktop dependencies
-  sdl3 = (prev.sdl3.override {
-    libdecorSupport = false;
-    pipewireSupport = false;
-    pulseaudioSupport = false;
-    waylandSupport = false;
-    x11Support = false;
-  }).overrideAttrs (old: {
-    cmakeFlags = old.cmakeFlags ++ [ "-DSDL_UNIX_CONSOLE_BUILD=ON" ];
-    doCheck = false;
-  });
+  sdl3 =
+    (prev.sdl3.override {
+      libdecorSupport = false;
+      pipewireSupport = false;
+      pulseaudioSupport = false;
+      waylandSupport = false;
+      x11Support = false;
+    }).overrideAttrs
+      (old: {
+        cmakeFlags = old.cmakeFlags ++ [ "-DSDL_UNIX_CONSOLE_BUILD=ON" ];
+        doCheck = false;
+      });
 }

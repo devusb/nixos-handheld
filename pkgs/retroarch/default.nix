@@ -1,6 +1,7 @@
-{ retroarch-bare
-, libretro
-, settings ? { }
+{
+  retroarch-bare,
+  libretro,
+  settings ? { },
 }:
 
 retroarch-bare.wrapper {

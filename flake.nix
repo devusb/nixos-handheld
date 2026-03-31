@@ -7,7 +7,13 @@
     systems.url = "github:nix-systems/default";
   };
 
-  outputs = { self, nixpkgs, treefmt-nix, systems }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      treefmt-nix,
+      systems,
+    }:
     let
       system = "aarch64-linux";
       pkgs = import nixpkgs {

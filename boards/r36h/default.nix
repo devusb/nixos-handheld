@@ -1,6 +1,12 @@
 # R36H board definition — RK3326-based handheld gaming device
 # R36H is electrically identical to R36S (landscape shell variant)
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 {
   imports = [
@@ -37,7 +43,7 @@
 
   # Custom defconfig covers all required options via make olddefconfig,
   # but NixOS assertion checker reads the fragment directly and doesn't see them
-  system.requiredKernelConfig = lib.mkForce [];
+  system.requiredKernelConfig = lib.mkForce [ ];
 
   # Kernel modules
   boot.initrd.includeDefaultModules = false;
@@ -52,8 +58,13 @@
     device = "/dev/mmcblk0p1";
     fsType = "exfat";
     options = [
-      "nofail" "noauto" "x-systemd.automount" "x-systemd.device-timeout=5"
-      "uid=${toString config.users.users.gamer.uid}" "gid=100" "umask=0022"
+      "nofail"
+      "noauto"
+      "x-systemd.automount"
+      "x-systemd.device-timeout=5"
+      "uid=${toString config.users.users.gamer.uid}"
+      "gid=100"
+      "umask=0022"
     ];
   };
 

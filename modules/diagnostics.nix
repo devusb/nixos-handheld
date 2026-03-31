@@ -1,11 +1,23 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   systemd.services.hardware-diagnostics = {
     description = "Dump hardware diagnostics";
     after = [ "multi-user.target" ];
     wantedBy = [ "multi-user.target" ];
-    path = with pkgs; [ util-linux coreutils iproute2 systemd kmod alsa-utils ];
+    path = with pkgs; [
+      util-linux
+      coreutils
+      iproute2
+      systemd
+      kmod
+      alsa-utils
+    ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = pkgs.writeShellScript "hw-diag" ''
