@@ -14,17 +14,5 @@ final: prev: {
     parallel-n64 = prev.callPackage ./pkgs/parallel-n64 { libretro = prev.libretro; };
   };
 
-  # Strip SDL3 of desktop dependencies
-  sdl3 =
-    (prev.sdl3.override {
-      libdecorSupport = false;
-      pipewireSupport = false;
-      pulseaudioSupport = false;
-      waylandSupport = false;
-      x11Support = false;
-    }).overrideAttrs
-      (old: {
-        cmakeFlags = old.cmakeFlags ++ [ "-DSDL_UNIX_CONSOLE_BUILD=ON" ];
-        doCheck = false;
-      });
+  sdl3 = prev.callPackage ./pkgs/sdl3 { sdl3 = prev.sdl3; };
 }
