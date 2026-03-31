@@ -8,7 +8,7 @@ final: prev: {
   retroarch-bare = prev.callPackage ./pkgs/retroarch { retroarch-bare = prev.retroarch-bare; };
   retroarch-handheld = final.callPackage ./pkgs/retroarch/wrapper.nix { };
 
-  alsa-utils = prev.alsa-utils.override { withPipewireLib = false; };
+  alsa-utils = prev.callPackage ./pkgs/alsa-utils { alsa-utils = prev.alsa-utils; };
 
   libretro = prev.libretro // {
     parallel-n64 = prev.libretro.parallel-n64.overrideAttrs (old: {
