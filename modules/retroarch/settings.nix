@@ -21,6 +21,12 @@
   menu_show_shutdown = "true";
   menu_show_reboot = "true";
 
+  # Theme
+  rgui_menu_color_theme = "20";
+
+  # Input
+  input_player1_analog_dpad_mode = "1";
+
   # Hotkeys
   input_menu_toggle_btn = "nul";
   input_menu_toggle_gamepad_combo = "3";
