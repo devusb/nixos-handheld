@@ -1,11 +1,9 @@
 final: prev: {
   linux-rk3326 = final.callPackage ./pkgs/kernel-rk3326 { };
 
-  retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig.overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      cp ${./pkgs/retroarch/autoconfig/udev/r36s_Gamepad.cfg} $out/share/libretro/autoconfig/udev/
-    '';
-  });
+  retroarch-joypad-autoconfig = prev.callPackage ./pkgs/retroarch-joypad-autoconfig {
+    retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig;
+  };
 
   retroarch-bare = prev.callPackage ./pkgs/retroarch { retroarch-bare = prev.retroarch-bare; };
   retroarch-handheld = final.callPackage ./pkgs/retroarch/wrapper.nix { };
