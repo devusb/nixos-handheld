@@ -44,8 +44,8 @@ zstdcat result/sd-image/*.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=f
 ## Repository structure
 
 ```
-flake.nix             — nixosConfigurations.r36h, overlays.default, nixosModules.default
-overlay.nix           — customizes retroarch-bare, SDL3, alsa-utils, joypad-autoconfig, parallel-n64
+flake.nix             — nixosConfigurations.r36h, overlays.default, nixosModules.default, legacyPackages
+overlay.nix           — callPackage wiring for all custom packages
 modules/
   default.nix         — self-applies overlay, imports all shared modules
   retroarch/
@@ -55,7 +55,12 @@ modules/
   diagnostics.nix     — writes /var/log/diagnostics.txt on every boot
 pkgs/
   kernel-rk3326/      — mainline Linux 6.12 + ohjhas RK3326 patches
-  retroarch/          — wrapper with cores, ODROIDGO2 brightness patch, r36s_Gamepad autoconfig
+  retroarch/          — retroarch-bare override (no X11/Wayland/Pulse/Qt, ODROIDGO2 brightness patch)
+    wrapper.nix       — retroarch-handheld wrapper (cores list + settings)
+  retroarch-joypad-autoconfig/ — r36s_Gamepad button mapping
+  alsa-utils/         — alsa-utils with pipewire disabled
+  parallel-n64/       — aarch64 build fixes for parallel-n64
+  sdl3/               — SDL3 stripped of desktop dependencies (DRM/KMS console build)
 boards/
   r36h/               — board-specific: boot blobs, DTBs, boot.ini, mounts
 images/
@@ -95,13 +100,13 @@ Settings are defined in `modules/retroarch/settings.nix`. Key settings:
 - `savestate_directory = "/roms/states"` — states survive reflash
 - `input_menu_toggle_gamepad_combo = "3"` — Start+Select opens quick menu
 
-RetroArch is built without X11, Wayland, PulseAudio, PipeWire, Qt (matching circuix-sword pattern). The overlay in `overlay.nix` handles this by overriding `retroarch-bare`.
+RetroArch is built without X11, Wayland, PulseAudio, PipeWire, Qt (matching circuix-sword pattern). The build customization is in `pkgs/retroarch/default.nix`, wired through `overlay.nix`.
 
 The ODROIDGO2 brightness patch (`pkgs/retroarch/odroidgo2-features.patch`) unlocks brightness control and shutdown/reboot menu items without requiring HAVE_LAKKA. Note: shutdown/reboot menu items don't actually show in rgui (only in xmb/ozone). Quit RetroArch triggers `systemctl poweroff` via `ExecStopPost`.
 
 ### Gamepad autoconfig
 
-Button mapping is in `pkgs/retroarch/autoconfig/udev/r36s_Gamepad.cfg`. The overlay adds it to the `retroarch-joypad-autoconfig` package. Mapping was determined by remapping in RetroArch's UI, then reading the generated config from the rootfs.
+Button mapping is in `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`. Mapping was determined by remapping in RetroArch's UI, then reading the generated config from the rootfs.
 
 Device: `r36s_Gamepad`, vendor `1`, product `4488` (0x1188).
 
