@@ -101,7 +101,7 @@ The ODROIDGO2 brightness patch (`pkgs/retroarch/odroidgo2-features.patch`) unloc
 
 ### Gamepad autoconfig
 
-Button mapping is in `pkgs/retroarch/autoconfig/udev/r36s_Gamepad.cfg`. The overlay adds it to the `retroarch-joypad-autoconfig` package. Mapping was determined by remapping in RetroArch's UI, then reading the generated config from the rootfs.
+Button mapping is in `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`. Mapping was determined by remapping in RetroArch's UI, then reading the generated config from the rootfs.
 
 Device: `r36s_Gamepad`, vendor `1`, product `4488` (0x1188).
 
