@@ -7,33 +7,8 @@ final: prev: {
     '';
   });
 
-  retroarch-bare =
-    (prev.retroarch-bare.override {
-      withWayland = false;
-    }).overrideAttrs
-      (old: {
-        buildInputs = final.lib.lists.subtractLists [
-          final.ffmpeg_7
-          final.pipewire
-          final.qt6.qtbase
-          final.wrapGAppsHook3
-        ] old.buildInputs;
-        nativeBuildInputs = final.lib.remove final.qt6.wrapQtAppsHook old.nativeBuildInputs;
-        configureFlags = (old.configureFlags or [ ]) ++ [
-          "--disable-pipewire"
-          "--disable-pulse"
-          "--disable-qt"
-          "--disable-wayland"
-          "--disable-x11"
-          "--disable-xinerama"
-          "--disable-xrandr"
-        ];
-        patches = (old.patches or [ ]) ++ [
-          ./pkgs/retroarch/odroidgo2-features.patch
-        ];
-      });
-
-  retroarch-handheld = final.callPackage ./pkgs/retroarch { };
+  retroarch-bare = prev.callPackage ./pkgs/retroarch { retroarch-bare = prev.retroarch-bare; };
+  retroarch-handheld = final.callPackage ./pkgs/retroarch/wrapper.nix { };
 
   alsa-utils = prev.alsa-utils.override { withPipewireLib = false; };
 
