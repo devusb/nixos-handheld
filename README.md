@@ -108,14 +108,15 @@ Create these directories on the roms card:
 
 ## References
 
-- [ohjhas/linux-stable-rk3326](https://github.com/ohjhas/linux-stable-rk3326) — Mainline kernel patches for RK3326 handhelds
-- [ROCKNIX](https://github.com/ROCKNIX/distribution) — Generic MIPI DSI panel driver, `importpanel.py`
-- [ArkOS-R3XS](https://github.com/AeolusUX/ArkOS-R3XS) — Boot blobs, DTBs, panel configurations for R36H
-- [dArkOS](https://github.com/christianhaitian/arkos) — Emulation stack and device support reference
+- [Andre Renaud's R36S writeup](https://ignavus.net/r36s) — Mainline Linux on R36S: DTS, panel, boot flow
+- [buildroot-r36s](https://github.com/AndreRenaud/buildroot-r36s) — Original R36S DTS and Buildroot system
+- [nixos-r36s](https://github.com/icefirex/nixos-r36s) — NixOS on R36S, Armbian U-Boot, deploy-rs
+- [ohjhas/linux-stable-rk3326](https://github.com/ohjhas/linux-stable-rk3326) — RK3326 kernel patches, GPU/CPU OPPs
+- [ROCKNIX](https://github.com/ROCKNIX/distribution) — Generic MIPI DSI panel driver
+- [Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS) — Overlay + modules + legacyPackages pattern
+- [nabam/nixos-rockchip](https://github.com/nabam/nixos-rockchip) — Rockchip NixOS SD image generation, extlinux boot
 - [circuix-sword](https://github.com/jecaro/circuix-sword) — NixOS handheld gaming (RetroArch on DRM/KMS)
-- [Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS) — Overlay + modules structure
-- [nabam/nixos-rockchip](https://github.com/nabam/nixos-rockchip) — Rockchip NixOS SD image generation
-- [dArkOSRE-R36](https://github.com/southoz/dArkOSRE-R36) — R36H device configuration
+- [dArkOS](https://github.com/christianhaitian/arkos) — Emulation stack and device support reference
 
 ## Documentation
 
