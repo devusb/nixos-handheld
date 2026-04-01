@@ -42,15 +42,15 @@ The build requires U-Boot boot blobs extracted from a working ArkOS installation
 Extract from a working ArkOS SD card (the system card, not the roms card):
 
 ```bash
-mkdir -p boards/r36h/boot
-sudo dd if=/dev/sdX of=boards/r36h/boot/idbloader.img bs=512 skip=64 count=8000
-sudo dd if=/dev/sdX of=boards/r36h/boot/uboot.img bs=512 skip=16384 count=8192
-sudo dd if=/dev/sdX of=boards/r36h/boot/trust.img bs=512 skip=24576 count=8192
+mkdir -p handhelds/r36h/boot
+sudo dd if=/dev/sdX of=handhelds/r36h/boot/idbloader.img bs=512 skip=64 count=8000
+sudo dd if=/dev/sdX of=handhelds/r36h/boot/uboot.img bs=512 skip=16384 count=8192
+sudo dd if=/dev/sdX of=handhelds/r36h/boot/trust.img bs=512 skip=24576 count=8192
 ```
 
 ### Panel init sequence (already included)
 
-The display panel init sequence was extracted from the ArkOS DTB using ROCKNIX's `importpanel.py` and is baked into `boards/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb`. No action needed unless your R36H has a different panel variant (see the [R36S panel lottery](https://rocknix.org/devices/unbranded/game-console-r35s-r36s/)).
+The display panel init sequence was extracted from the ArkOS DTB using ROCKNIX's `importpanel.py` and is baked into `handhelds/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb`. No action needed unless your R36H has a different panel variant (see the [R36S panel lottery](https://rocknix.org/devices/unbranded/game-console-r35s-r36s/)).
 
 ## ROMs
 

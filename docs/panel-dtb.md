@@ -1,6 +1,6 @@
 # Generating the Display Panel DTB
 
-The R36H ships with various NV3051D LCD panel variants ("panel lottery"). Each variant needs a different init sequence. The DTB at `boards/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb` contains the init sequence for one specific panel variant.
+The R36H ships with various NV3051D LCD panel variants ("panel lottery"). Each variant needs a different init sequence. The DTB at `handhelds/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb` contains the init sequence for one specific panel variant.
 
 If your R36H has a different panel (display doesn't work, backlight cycles), you'll need to generate a new DTB from a working ArkOS/ArkOS-R3XS SD card.
 
@@ -105,13 +105,13 @@ with open('/tmp/r36s-rocknix.dts', 'w') as f:
 ### 5. Compile the DTB
 
 ```bash
-nix-shell -p dtc --run "dtc -I dts -O dtb /tmp/r36s-rocknix.dts -o boards/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb"
+nix-shell -p dtc --run "dtc -I dts -O dtb /tmp/r36s-rocknix.dts -o handhelds/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb"
 ```
 
 ### 6. Verify
 
 ```bash
-nix-shell -p dtc --run "dtc -I dtb -O dts boards/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb" | grep "rocknix"
+nix-shell -p dtc --run "dtc -I dtb -O dts handhelds/r36h/dtb/rk3326-gameconsole-r36s-rocknix.dtb" | grep "rocknix"
 # Should show: compatible = "rocknix,generic-dsi";
 ```
 

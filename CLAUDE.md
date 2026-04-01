@@ -38,7 +38,7 @@ zstdcat result/sd-image/*.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=f
 
 - **`/dev/sda` or `/dev/sdb` becomes a regular file** after failed dd writes. Check with `ls -la /dev/sdX` — if it shows `-rw-r--r--` instead of `brw-rw----`, delete it and replug the card.
 - **New files must be `git add`ed** before building — flake evaluation only sees tracked files.
-- **Boot blobs are gitignored** and must exist at `boards/r36h/boot/` before building. See `docs/extracting-from-arkos.md`.
+- **Boot blobs are gitignored** and must exist at `handhelds/r36h/boot/` before building. See `docs/extracting-from-arkos.md`.
 - The SD card device name changes between plugs (`sda` → `sdb` etc). Always check `lsblk` first.
 
 ## Repository structure
@@ -61,10 +61,10 @@ pkgs/
   alsa-utils/         — alsa-utils with pipewire disabled
   parallel-n64/       — aarch64 build fixes for parallel-n64
   sdl3/               — SDL3 stripped of desktop dependencies (DRM/KMS console build)
-boards/
-  r36h/               — board-specific: boot blobs, DTBs, boot.ini, mounts
-images/
-  sd-image-rk3326.nix — MBR image with U-Boot blob injection at raw offsets
+handhelds/
+  r36h/               — device-specific: boot blobs, DTBs, boot.ini, mounts
+socs/
+  rk3326.nix          — RK3326 SD image: U-Boot blob injection, partition layout
 ```
 
 ## How things work
@@ -205,7 +205,7 @@ Next things to try (from `project_usb_fixup_notes.md` in memory):
 - Use `lib.getExe` / `lib.getExe'` instead of `${pkg}/bin/name`
 - RetroArch settings go in `modules/retroarch/settings.nix`, not inline
 - Custom packages go in `pkgs/`, exposed via `overlay.nix`
-- Board-specific config only in `boards/r36h/`
+- Device-specific config only in `handhelds/r36h/`
 - Shared modules in `modules/`
 - Build with remote store: `nix build --eval-store auto --store ssh-ng://nix@superintendent .#packages.aarch64-linux.r36h-image --impure`
 - Copy back: `nix copy --no-check-sigs --from ssh-ng://nix@superintendent $(nix eval --raw .#packages.aarch64-linux.r36h-image --impure)`
