@@ -21,41 +21,58 @@
     "${modulesPath}/profiles/base.nix"
   ];
 
-  # Boot blobs extracted from working R36H ArkOS SD card
-  # Absolute paths required — files are gitignored, invisible to flake source
-  # Requires --impure until we build U-Boot from source or fetchurl them
-  handheld.bootBlobs = {
-    idbloader = /home/mhelton/code/nixos-handheld/handhelds/r36h/boot/idbloader.img;
-    uboot = /home/mhelton/code/nixos-handheld/handhelds/r36h/boot/uboot.img;
-    trust = /home/mhelton/code/nixos-handheld/handhelds/r36h/boot/trust.img;
+  # Armbian U-Boot with ext4 support
+  handheld.uboot = ./blobs/u-boot-rockchip.bin;
+  handheld.bootIni = ./boot.ini;
+  handheld.panChoIni = ./firmware/PanCho.ini;
+  handheld.logoEnv = ./firmware/logo.env;
+  handheld.panelDtbo = ./firmware/panel4/mipi-panel.dtbo;
+  handheld.panelDtb = ./firmware/panel4/rg351mp-kernel.dtb;
+
+  # Linux DTB: built from kernel source with R36S DTS patch
+  hardware.deviceTree = {
+    enable = true;
+    filter = "*rk3326-r36s.dtb";
+    name = "rockchip/rk3326-r36s.dtb";
   };
 
-  # Linux DTB: ROCKNIX generic-dsi with NV3051D panel init from ArkOS
-  handheld.kernelDTB = "rk3326-gameconsole-r36s-rocknix.dtb";
-  handheld.kernelDTBPath = ./dtb/rk3326-gameconsole-r36s-rocknix.dtb;
-  handheld.bootIni = ./boot.ini;
-
-  # U-Boot DTB: ArkOS BSP for U-Boot's own display init
-  handheld.ubootDTB = ./dtb/gameconsole-r36s.dtb;
-
-  # Custom kernel
+  # Mainline kernel with RK3326 driver config
   boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux-rk3326;
 
-  # Custom defconfig covers all required options via make olddefconfig,
-  # but NixOS assertion checker reads the fragment directly and doesn't see them
-  system.requiredKernelConfig = lib.mkForce [ ];
+  # Out-of-tree ROCKNIX generic-dsi panel driver
+  boot.extraModulePackages = [
+    (pkgs.callPackage ../../pkgs/panel-generic-dsi {
+      kernel = config.boot.kernelPackages.kernel;
+    })
+  ];
 
-  # Kernel modules
-  boot.initrd.includeDefaultModules = false;
-  boot.initrd.availableKernelModules = lib.mkForce [ ];
-  boot.kernelModules = [ "panfrost" ];
+  # Blacklist mainline NV3051D driver (lacks R36H-specific init sequence)
+  boot.blacklistedKernelModules = [ "panel_newvision_nv3051d" ];
+
+  # Load display modules early so DRM framebuffer is ready before stage-1
+  boot.initrd.kernelModules = [
+    "rockchipdrm"
+    "panel_generic_dsi"
+    "phy_rockchip_inno_dsidphy"
+  ];
+
+  boot.kernelModules = [ "panfrost" "g_ether" ];
+  boot.kernelParams = [ "usbcore.autosuspend=-1" ];
+
+  # USB gadget ethernet
+  networking.interfaces.usb0 = {
+    ipv4.addresses = [{
+      address = "10.0.0.2";
+      prefixLength = 24;
+    }];
+  };
 
   # Firmware
   hardware.enableRedistributableFirmware = true;
 
   # Mount second SD card slot for ROMs
   fileSystems."/roms" = {
-    device = "/dev/mmcblk0p1";
+    device = "/dev/mmcblk1p1";
     fsType = "exfat";
     options = [
       "nofail"
@@ -68,10 +85,19 @@
     ];
   };
 
-  # Networking — no WiFi hardware on this unit
+  # zram swap — critical with only 1GB RAM
+  zramSwap.enable = true;
+
+  # Networking — no WiFi hardware, USB gadget ethernet only
   networking.hostName = "r36h";
   networking.useDHCP = false;
   networking.firewall.enable = false;
+
+  # SSH for headless debugging via USB gadget
+  services.openssh = {
+    enable = true;
+    settings.PermitRootLogin = "yes";
+  };
 
   users.users.root.initialPassword = "nixos";
 

@@ -21,6 +21,9 @@
   menu_show_shutdown = "true";
   menu_show_reboot = "true";
 
+  # Video — 2x scale fits 640x480 (320x240 core * 2)
+  video_scale = "2";
+
   # Theme
   rgui_menu_color_theme = "20";
 

@@ -1,35 +1,38 @@
 {
   lib,
-  fetchurl,
-  linuxKernel,
+  linuxPackages_latest,
   ...
 }:
-
-linuxKernel.manualConfig {
-  version = "6.12.74";
-  modDirVersion = "6.12.74";
-
-  src = fetchurl {
-    url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.12.74.tar.xz";
-    hash = "sha256-O1busdyaQ38YnKVrgjvjdpmU9ZpOoIlbCOwNIKysoT4=";
-  };
-
-  configfile = ./rk3326_defconfig;
-  allowImportFromDerivation = true;
-
+(linuxPackages_latest.kernel.override {
   kernelPatches = [
     {
-      name = "rk3326-handheld-support";
-      patch = ./patches/0001-rk3326-handheld-support.patch;
-    }
-    {
-      name = "dwc2-force-host-mode";
-      patch = ./patches/0002-dwc2-force-host-mode.patch;
+      name = "r36s-makefile";
+      patch = ./patches/0001-add-r36s-to-makefile.patch;
     }
   ];
+  structuredExtraConfig = with lib.kernel; {
+    ROCKCHIP_SARADC = module;
+    KEYBOARD_GPIO = module;
+    INPUT_EVDEV = module;
 
-  extraMeta = {
-    platforms = [ "aarch64-linux" ];
-    description = "Linux 6.12.74 with RK3326 handheld patches";
+    # Display (MIPI DSI + Rockchip VOP)
+    DRM_ROCKCHIP = module;
+    PHY_ROCKCHIP_INNO_DSIDPHY = module;
+
+    # GPU (Panfrost)
+    DRM_PANFROST = module;
+
+    # Audio (RK817 codec via I2S)
+    SND_SOC_ROCKCHIP_I2S = module;
+    SND_SOC_RK817 = module;
+
+    # USB gadget ethernet
+    USB_DWC2 = module;
+    USB_GADGET = yes;
+    USB_ETH = module;
   };
-}
+}).overrideAttrs (old: {
+  postPatch = (old.postPatch or "") + ''
+    cp ${./rk3326-r36s.dts} arch/arm64/boot/dts/rockchip/rk3326-r36s.dts
+  '';
+})
