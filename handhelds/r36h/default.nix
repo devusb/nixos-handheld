@@ -11,7 +11,7 @@
 {
   imports = [
     ../../modules
-    ../../images/sd-image-rk3326.nix
+    ../../socs/rk3326.nix
     "${modulesPath}/profiles/minimal.nix"
   ];
 
@@ -25,9 +25,9 @@
   # Absolute paths required — files are gitignored, invisible to flake source
   # Requires --impure until we build U-Boot from source or fetchurl them
   handheld.bootBlobs = {
-    idbloader = /home/mhelton/code/nixos-handheld/boards/r36h/boot/idbloader.img;
-    uboot = /home/mhelton/code/nixos-handheld/boards/r36h/boot/uboot.img;
-    trust = /home/mhelton/code/nixos-handheld/boards/r36h/boot/trust.img;
+    idbloader = /home/mhelton/code/nixos-handheld/handhelds/r36h/boot/idbloader.img;
+    uboot = /home/mhelton/code/nixos-handheld/handhelds/r36h/boot/uboot.img;
+    trust = /home/mhelton/code/nixos-handheld/handhelds/r36h/boot/trust.img;
   };
 
   # Linux DTB: ROCKNIX generic-dsi with NV3051D panel init from ArkOS

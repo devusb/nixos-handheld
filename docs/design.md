@@ -266,9 +266,9 @@ dArkOS installs armhf (32-bit ARM) libraries and builds some components as 32-bi
 nixos-handheld/
 ├── flake.nix                        # Entry point
 ├── flake.lock
-├── boards/
+├── handhelds/
 │   └── r36h/
-│       ├── default.nix              # Board-specific NixOS config
+│       ├── default.nix              # Device-specific NixOS config
 │       ├── hardware.nix             # Kernel, GPU, display, input
 │       ├── boot.ini                 # U-Boot script for R36H
 │       └── boot/                    # User-provided boot blobs (gitignored)
@@ -295,8 +295,8 @@ nixos-handheld/
 │   │   └── default.nix
 │   └── emulationstation-config/
 │       └── default.nix              # ES themes, system defs, input maps
-├── images/
-│   └── sd-image.nix                 # SD card image generation module
+├── socs/
+│   └── rk3326.nix                   # RK3326 SD card image generation module
 └── docs/
     └── adding-a-board.md            # How to add new device support
 ```
@@ -311,7 +311,7 @@ nix build .#images.r36h
 nix build .#images.rg353m
 ```
 
-Boot blobs are placed in `boards/r36h/boot/` (gitignored) before building. The image builder reads them from there.
+Boot blobs are placed in `handhelds/r36h/boot/` (gitignored) before building. The image builder reads them from there.
 
 ## Resource Constraints — 1GB RAM
 

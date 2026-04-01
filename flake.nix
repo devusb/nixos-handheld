@@ -33,7 +33,7 @@
         inherit system;
         modules = [
           { nixpkgs.config.allowUnfree = true; }
-          ./boards/r36h
+          ./handhelds/r36h
         ];
       };
 

@@ -58,7 +58,7 @@ git init
 result
 result-*
 # User-provided boot blobs (binary, not committed)
-boards/*/boot/*.img
+handhelds/*/boot/*.img
 ```
 
 - [ ] **Step 3: Write minimal `flake.nix`**
@@ -293,13 +293,13 @@ git commit -m "kernel: add Nix derivation for linux-stable 6.12.74 + rk3326 patc
 ### Task 4: Create the SD Image Module
 
 **Files:**
-- Create: `nixos-handheld/images/sd-image-rk3326.nix`
+- Create: `nixos-handheld/socs/rk3326.nix`
 
 This module handles MBR partitioning, raw U-Boot blob injection, boot.ini, and rootfs population. It avoids loopback mounts (which require root and break in the Nix sandbox) by using `mkfs.btrfs --rootdir` and `mtools` for FAT32.
 
 - [ ] **Step 1: Write the SD image module**
 
-Create `nixos-handheld/images/sd-image-rk3326.nix`:
+Create `nixos-handheld/socs/rk3326.nix`:
 
 ```nix
 # SD card image module for RK3326 handhelds
@@ -467,7 +467,7 @@ in
 
 ```bash
 cd ~/code/nixos-handheld
-nix eval --expr 'let f = import ./images/sd-image-rk3326.nix; in builtins.typeOf f'
+nix eval --expr 'let f = import ./socs/rk3326.nix; in builtins.typeOf f'
 ```
 
 Expected: `"lambda"` (valid NixOS module function).
@@ -476,7 +476,7 @@ Expected: `"lambda"` (valid NixOS module function).
 
 ```bash
 cd ~/code/nixos-handheld
-git add images/sd-image-rk3326.nix
+git add socs/rk3326.nix
 git commit -m "images: add sandbox-safe SD card image module for RK3326
 
 MBR partitioning with raw U-Boot blob injection. Uses mtools and
@@ -489,12 +489,12 @@ wrapping for U-Boot compatibility."
 ### Task 5: Create the R36H Board Definition and boot.ini
 
 **Files:**
-- Create: `nixos-handheld/boards/r36h/default.nix`
-- Create: `nixos-handheld/boards/r36h/boot.ini`
+- Create: `nixos-handheld/handhelds/r36h/default.nix`
+- Create: `nixos-handheld/handhelds/r36h/boot.ini`
 
 - [ ] **Step 1: Create boot.ini**
 
-Create `nixos-handheld/boards/r36h/boot.ini`. Values are taken directly from the working ArkOS-R3XS boot.ini, with only the `root=` parameter changed:
+Create `nixos-handheld/handhelds/r36h/boot.ini`. Values are taken directly from the working ArkOS-R3XS boot.ini, with only the `root=` parameter changed:
 
 ```
 odroidgoa-uboot-config
@@ -521,7 +521,7 @@ Notes:
 
 - [ ] **Step 2: Create the board NixOS configuration**
 
-Create `nixos-handheld/boards/r36h/default.nix`:
+Create `nixos-handheld/handhelds/r36h/default.nix`:
 
 ```nix
 # R36H board definition — RK3326-based handheld gaming device
@@ -529,10 +529,10 @@ Create `nixos-handheld/boards/r36h/default.nix`:
 
 {
   imports = [
-    ../../images/sd-image-rk3326.nix
+    ../../socs/rk3326.nix
   ];
 
-  # Boot blob paths — user must place these in boards/r36h/boot/
+  # Boot blob paths — user must place these in handhelds/r36h/boot/
   handheld.bootBlobs = {
     idbloader = ./boot/idbloader.img;
     uboot = ./boot/uboot.img;
@@ -628,12 +628,12 @@ Notes:
 
 ```bash
 cd ~/code/nixos-handheld
-git add boards/r36h/
+git add handhelds/r36h/
 git commit -m "boards: add R36H board definition with boot.ini
 
 Minimal NixOS config for boot-to-TTY with SSH, WiFi firmware,
 Panfrost GPU, and zram swap. User must place boot blobs in
-boards/r36h/boot/ before building."
+handhelds/r36h/boot/ before building."
 ```
 
 ---
@@ -662,7 +662,7 @@ boards/r36h/boot/ before building."
         # Builds for aarch64 — requires binfmt emulation or remote aarch64 builder
         system = "aarch64-linux";
         modules = [
-          ./boards/r36h
+          ./handhelds/r36h
         ];
       };
 
@@ -687,21 +687,21 @@ boards/r36h/boot/ before building."
 Before building, extract boot blobs from a working R36H SD card:
 
 ```bash
-mkdir -p ~/code/nixos-handheld/boards/r36h/boot
+mkdir -p ~/code/nixos-handheld/handhelds/r36h/boot
 
 # With the R36H's SD card at /dev/sdX:
-dd if=/dev/sdX of=boards/r36h/boot/idbloader.img bs=512 skip=64 count=8000
-dd if=/dev/sdX of=boards/r36h/boot/uboot.img bs=512 skip=16384 count=8192
-dd if=/dev/sdX of=boards/r36h/boot/trust.img bs=512 skip=24576 count=8192
+dd if=/dev/sdX of=handhelds/r36h/boot/idbloader.img bs=512 skip=64 count=8000
+dd if=/dev/sdX of=handhelds/r36h/boot/uboot.img bs=512 skip=16384 count=8192
+dd if=/dev/sdX of=handhelds/r36h/boot/trust.img bs=512 skip=24576 count=8192
 ```
 
 Alternatively, if you have the dArkOS build output, copy the blobs from `sd_fuse/`.
 
 **Verify blobs are present and non-empty:**
 ```bash
-ls -la boards/r36h/boot/
+ls -la handhelds/r36h/boot/
 # All three files should be present and >0 bytes
-file boards/r36h/boot/*.img
+file handhelds/r36h/boot/*.img
 ```
 
 - [ ] **Step 3: Attempt the image build**
