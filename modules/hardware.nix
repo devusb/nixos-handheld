@@ -18,20 +18,21 @@
   # Power button = suspend
   services.logind.settings.Login.HandlePowerKey = "suspend";
 
-  # Set safe default volume on boot (50%) — protects speakers
+  # Set hardware volume on boot — RetroArch controls volume in software
+  # via its own audio_volume setting (volume buttons adjust RetroArch's
+  # internal dB, not the ALSA mixer). 80% hardware (-19dB) gives
+  # RetroArch a usable 0-100% software range.
   systemd.services.alsa-init = {
     description = "Set default ALSA volume";
-    after = [ "sound.target" ];
+    after = [ "sound.target" "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device" ];
+    requires = [ "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device" ];
     wantedBy = [ "multi-user.target" ];
     path = [ pkgs.alsa-utils ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = pkgs.writeShellScript "alsa-init" ''
-        amixer -c 0 sset 'Master' 50% 2>/dev/null || true
-        amixer -c 0 sset 'Headphone' 50% 2>/dev/null || true
-        amixer -c 0 sset 'Speaker' 50% 2>/dev/null || true
-        amixer -c 0 sset 'Playback' 50% 2>/dev/null || true
+        amixer -c 0 sset 'Master' 80% 2>/dev/null || true
       '';
     };
   };
