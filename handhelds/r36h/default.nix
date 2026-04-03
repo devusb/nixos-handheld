@@ -39,11 +39,10 @@
   # Mainline kernel with RK3326 driver config
   boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux-rk3326;
 
-  # Out-of-tree ROCKNIX generic-dsi panel driver
+  # Out-of-tree ROCKNIX generic-dsi panel driver and rocknix-joypad driver
   boot.extraModulePackages = [
-    (pkgs.callPackage ../../pkgs/panel-generic-dsi {
-      kernel = config.boot.kernelPackages.kernel;
-    })
+    pkgs.panel-generic-dsi
+    pkgs.rocknix-joypad
   ];
 
   # Blacklist mainline NV3051D driver (lacks R36H-specific init sequence)
@@ -56,7 +55,7 @@
     "phy_rockchip_inno_dsidphy"
   ];
 
-  boot.kernelModules = [ "panfrost" "g_ether" ];
+  boot.kernelModules = [ "panfrost" "g_ether" "rockchip_saradc" "rocknix_singleadc_joypad" ];
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
   # USB gadget ethernet

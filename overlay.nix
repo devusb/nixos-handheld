@@ -17,4 +17,12 @@ final: prev: {
   };
 
   sdl3 = final.callPackage ./pkgs/sdl3 { sdl3 = prev.sdl3; };
+
+  panel-generic-dsi = final.callPackage ./pkgs/panel-generic-dsi {
+    kernel = final.linux-rk3326;
+  };
+
+  rocknix-joypad = final.callPackage ./pkgs/rocknix-joypad {
+    kernel = final.linux-rk3326;
+  };
 }
