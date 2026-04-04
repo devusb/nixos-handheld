@@ -23,7 +23,6 @@
 
   hardware.enableAllHardware = lib.mkForce false;
 
-
   # Armbian U-Boot with ext4 support
   handheld.uboot = ./blobs/u-boot-rockchip.bin;
   handheld.bootIni = ./boot.ini;
@@ -60,15 +59,22 @@
     "phy_rockchip_inno_dsidphy"
   ];
 
-  boot.kernelModules = [ "panfrost" "g_ether" "rockchip_saradc" "rocknix_singleadc_joypad" ];
+  boot.kernelModules = [
+    "panfrost"
+    "g_ether"
+    "rockchip_saradc"
+    "rocknix_singleadc_joypad"
+  ];
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
   # USB gadget ethernet
   networking.interfaces.usb0 = {
-    ipv4.addresses = [{
-      address = "10.0.0.2";
-      prefixLength = 24;
-    }];
+    ipv4.addresses = [
+      {
+        address = "10.0.0.2";
+        prefixLength = 24;
+      }
+    ];
   };
 
   # Firmware

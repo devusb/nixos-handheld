@@ -24,7 +24,10 @@
   # RetroArch a usable 0-100% software range.
   systemd.services.alsa-init = {
     description = "Set default ALSA volume";
-    after = [ "sound.target" "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device" ];
+    after = [
+      "sound.target"
+      "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device"
+    ];
     requires = [ "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device" ];
     wantedBy = [ "multi-user.target" ];
     path = [ pkgs.alsa-utils ];

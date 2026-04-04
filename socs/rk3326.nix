@@ -92,8 +92,12 @@ in
         ${lib.optionalString (cfg.panChoIni != null) "cp ${cfg.panChoIni} firmware/PanCho.ini"}
         ${lib.optionalString (cfg.logoEnv != null) "cp ${cfg.logoEnv} firmware/logo.env"}
         mkdir -p firmware/ScreenFiles/Panel4
-        ${lib.optionalString (cfg.panelDtbo != null) "cp ${cfg.panelDtbo} firmware/ScreenFiles/Panel4/mipi-panel.dtbo"}
-        ${lib.optionalString (cfg.panelDtb != null) "cp ${cfg.panelDtb} firmware/ScreenFiles/Panel4/rg351mp-kernel.dtb"}
+        ${lib.optionalString (
+          cfg.panelDtbo != null
+        ) "cp ${cfg.panelDtbo} firmware/ScreenFiles/Panel4/mipi-panel.dtbo"}
+        ${lib.optionalString (
+          cfg.panelDtb != null
+        ) "cp ${cfg.panelDtb} firmware/ScreenFiles/Panel4/rg351mp-kernel.dtb"}
       '';
 
       # Write U-Boot blob + panel files with spaces in dir names
