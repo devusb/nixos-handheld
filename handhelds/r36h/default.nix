@@ -97,6 +97,7 @@
 
   # zram swap — critical with only 1GB RAM
   zramSwap.enable = true;
+  zramSwap.memoryPercent = 100;
 
   # Networking — no WiFi hardware, USB gadget ethernet only
   networking.hostName = "r36h";
