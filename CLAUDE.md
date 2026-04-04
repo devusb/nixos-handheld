@@ -11,9 +11,9 @@ NixOS-based gaming OS for the Game Console R36H (RK3326 ARM handheld). Boots dir
 - **RAM**: 1GB DDR3L (tight — be mindful of closure size)
 - **Display**: 3.5" 640x480 MIPI DSI — NV3051D controller, panel varies by unit ("panel lottery")
 - **Storage**: Two microSD slots — slot 1 is NixOS boot, slot 2 is ROMs (exFAT)
-- **Input**: GPIO joypad (`r36s_Gamepad`, odroidgo3-joypad driver), volume buttons (`gpio-keys-vol`)
-- **Audio**: RK817 codec, speaker + headphone jack
-- **USB**: dwc2 OTG controller — currently broken for both host and gadget modes
+- **Input**: ROCKNIX singleadc-joypad (`r36s_Gamepad`, unified buttons + analog sticks), volume buttons (`gpio-keys-vol`)
+- **Audio**: RK817 codec, speaker + headphone jack (speaker driven through HP path)
+- **USB**: dwc2 OTG controller — gadget ethernet works, host mode broken (error -71)
 - **WiFi**: RTL8723BS chip — unpopulated on this specific unit (no WiFi)
 - **Power**: RK817 charger, power button mapped to suspend via logind
 
@@ -22,23 +22,35 @@ NixOS-based gaming OS for the Game Console R36H (RK3326 ARM handheld). Boots dir
 ```bash
 # Build the SD card image (requires aarch64 remote builder)
 nix build --eval-store auto --store ssh-ng://nix@superintendent \
-  .#packages.aarch64-linux.r36h-image --impure
-
+  .#packages.aarch64-linux.r36h-image
 # Copy result back from remote store
 nix copy --no-check-sigs --from ssh-ng://nix@superintendent \
-  $(nix eval --raw .#packages.aarch64-linux.r36h-image --impure)
+  $(nix eval --raw .#packages.aarch64-linux.r36h-image)
 
 # Decompress and flash (check lsblk first — device name varies!)
 zstdcat result/sd-image/*.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync && sync
 ```
 
-`--impure` is required because boot blobs use absolute paths (gitignored files).
+### Deploying to a running device
+
+```bash
+# Config/module changes (no kernel rebuild needed)
+nixos-rebuild switch --target-host root@10.0.0.2 \
+  --builders "ssh-ng://nix@superintendent aarch64-linux - 4 1 big-parallel" \
+  --max-jobs 0 --flake .#r36h
+
+# Kernel/DTS changes (requires reboot after deploy)
+nixos-rebuild boot --target-host root@10.0.0.2 \
+  --builders "ssh-ng://nix@superintendent aarch64-linux - 4 1 big-parallel" \
+  --max-jobs 0 --flake .#r36h
+```
+
+For long builds (kernel rebuilds), use `nix build` on the remote store first, then `nixos-rebuild` to deploy. `nixos-rebuild` with `--builders` can time out on long kernel builds.
 
 ### Common gotchas
 
 - **`/dev/sda` or `/dev/sdb` becomes a regular file** after failed dd writes. Check with `ls -la /dev/sdX` — if it shows `-rw-r--r--` instead of `brw-rw----`, delete it and replug the card.
 - **New files must be `git add`ed** before building — flake evaluation only sees tracked files.
-- **Boot blobs are gitignored** and must exist at `handhelds/r36h/boot/` before building. See `docs/extracting-from-arkos.md`.
 - The SD card device name changes between plugs (`sda` → `sdb` etc). Always check `lsblk` first.
 
 ## Repository structure
@@ -54,7 +66,12 @@ modules/
   hardware.nix        — GPU, backlight udev, ALSA init, power management, performance governor
   diagnostics.nix     — writes /var/log/diagnostics.txt on every boot
 pkgs/
-  kernel-rk3326/      — mainline Linux 6.12 + ohjhas RK3326 patches
+  kernel-rk3326/      — mainline Linux 6.19 kernel config + DTS
+    default.nix       — linuxPackages_latest.kernel.override + overrideAttrs for DTS postPatch
+    rk3326-r36s.dts   — plain DTS file (copied into kernel source at build time)
+    patches/          — single Makefile patch to add DTS to build
+  rocknix-joypad/     — ROCKNIX singleadc-joypad out-of-tree kernel module
+  panel-generic-dsi/  — ROCKNIX generic-dsi panel out-of-tree kernel module
   retroarch/          — retroarch-bare override (no X11/Wayland/Pulse/Qt, ODROIDGO2 brightness patch)
     wrapper.nix       — retroarch-handheld wrapper (cores list + settings)
   retroarch-joypad-autoconfig/ — r36s_Gamepad button mapping
@@ -62,7 +79,7 @@ pkgs/
   parallel-n64/       — aarch64 build fixes for parallel-n64
   sdl3/               — SDL3 stripped of desktop dependencies (DRM/KMS console build)
 handhelds/
-  r36h/               — device-specific: boot blobs, DTBs, boot.ini, mounts
+  r36h/               — device-specific: U-Boot blob, firmware, boot.ini, mounts
 socs/
   rk3326.nix          — RK3326 SD image: U-Boot blob injection, partition layout
 ```
@@ -71,20 +88,42 @@ socs/
 
 ### Boot flow
 
-1. U-Boot (ArkOS BSP blobs at raw sector offsets) loads `boot.ini` from FAT32 firmware partition
-2. `boot.ini` loads kernel Image, uInitrd, and DTB to fixed memory addresses
-3. U-Boot needs `gameconsole-r36s.dtb` (no rk3326- prefix, BSP format) for its own display init
-4. Linux gets `rk3326-gameconsole-r36s-rocknix.dtb` (ROCKNIX generic-dsi with panel init)
-5. NixOS initrd mounts rootfs (ext4, label NIXOS_SD), hands off to stage-2 init
-6. systemd starts, RetroArch service launches
+1. Armbian U-Boot (`u-boot-rockchip.bin` at raw sector 64) loads `boot.ini` from ext4 rootfs
+2. `boot.ini` loads kernel Image, initrd, and DTB from `/boot`, applies panel DTBO via `fdt apply`
+3. NixOS initrd mounts rootfs (ext4, label NIXOS_SD), hands off to stage-2 init
+4. systemd starts, RetroArch service launches
+
+### Generations / installBootLoader
+
+NixOS generation switching works via a custom `installBootLoader` script. Since U-Boot reads from fixed paths (not symlinks), the script copies the active generation's kernel, initrd, and DTB to `/boot/Image`, `/boot/initrd`, `/boot/dtb`. Runs automatically on `nixos-rebuild boot/switch`.
 
 ### Display / Panel
 
 The R36H ships with random LCD panels. Our DTB uses the ROCKNIX `panel-generic-dsi` driver which reads panel init bytes from a `panel_description` property in the device tree. The init sequence was extracted from a working ArkOS DTB using ROCKNIX's `importpanel.py`.
 
-If display doesn't work on a different R36H unit, regenerate the DTB — see `docs/panel-dtb.md`.
+### DTS approach
 
-Key discovery: U-Boot needs its own DTB (`gameconsole-r36s.dtb`, BSP format) for display init. Without it, U-Boot writes "lcd init fail, check dtb file" to `error.log` on the boot partition and the device appears dead. Always check `error.log` on the boot partition first when debugging boot issues.
+The device tree is a plain `.dts` file at `pkgs/kernel-rk3326/rk3326-r36s.dts`, copied into the kernel source tree via `overrideAttrs postPatch`. A single Makefile patch adds it to the kernel build. This avoids fragile patch files with hunk counts.
+
+### Joypad driver
+
+The R36H uses an analog mux (GPIO-controlled 4:1 multiplexer) to read 4 analog stick axes through a single SARADC channel. The ROCKNIX `singleadc-joypad` driver handles both ADC sticks and GPIO buttons as a single input device (`r36s_Gamepad`), so RetroArch sees one unified gamepad.
+
+The driver is an out-of-tree kernel module at `pkgs/rocknix-joypad/`, ported from the upstream ROCKNIX version:
+- `input_polled_dev` → `input_setup_polling()` (API removed in ~5.19)
+- Legacy integer GPIO → `gpiod` descriptor API
+- Mux GPIOs use `gpiod_set_raw_value_cansleep` (not `gpiod_set_value`) — the DTS flags are GPIO_ACTIVE_LOW but mux select lines need raw physical values
+- Left stick axes inverted via `invert-absx`/`invert-absy` DTS properties
+- Miyoo serial code stripped (not needed for R36H)
+
+Autoconfig: `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`. Device: vendor `1`, product `4488` (0x1188).
+
+### Audio
+
+- Hardware mixer set to 80% (-19dB) at boot via `alsa-init` systemd service
+- Service depends on `sys-devices-platform-rk817\x2dsound-sound-card0-controlC0.device` (not just `sound.target`) because the codec module loads late
+- RetroArch volume buttons control software `audio_volume`, not the ALSA mixer
+- Speaker is driven through the HP path — do NOT switch Playback Mux to SPK (kills audio)
 
 ### RetroArch configuration
 
@@ -95,6 +134,8 @@ Settings are defined in `modules/retroarch/settings.nix`. Key settings:
 - `audio_driver = "alsa"` — direct ALSA, no PulseAudio/PipeWire
 - `input_driver = "udev"` — reads from /dev/input directly
 - `menu_driver = "rgui"` — lightest menu driver
+- `menu_timedate_enable = "false"` — no RTC, clock is always wrong
+- `menu_show_online_updater = "false"` — no network
 - `system_directory = "/roms/bios"` — BIOS files on roms card
 - `savefile_directory = "/roms/saves"` — saves survive reflash
 - `savestate_directory = "/roms/states"` — states survive reflash
@@ -104,34 +145,16 @@ RetroArch is built without X11, Wayland, PulseAudio, PipeWire, Qt (matching circ
 
 The ODROIDGO2 brightness patch (`pkgs/retroarch/odroidgo2-features.patch`) unlocks brightness control and shutdown/reboot menu items without requiring HAVE_LAKKA. Note: shutdown/reboot menu items don't actually show in rgui (only in xmb/ozone). Quit RetroArch triggers `systemctl poweroff` via `ExecStopPost`.
 
-### Gamepad autoconfig
+### Debugging
 
-Button mapping is in `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`. Mapping was determined by remapping in RetroArch's UI, then reading the generated config from the rootfs.
+Device is accessible over USB gadget ethernet at `root@10.0.0.2` (password: `nixos`). Use `journalctl`, `dmesg`, `evtest`, etc. over SSH.
 
-Device: `r36s_Gamepad`, vendor `1`, product `4488` (0x1188).
-
-### How to read device state without keyboard/SSH
-
-No USB host or gadget works on this device. No WiFi. The only way to get diagnostic info:
-
-1. **Journal on rootfs**: Mount the SD card's ext4 partition and read systemd journal:
-   ```bash
-   sudo mount /dev/sdX2 /mnt
-   MACHINE_ID=$(ls /mnt/var/log/journal/)
-   journalctl -D /mnt/var/log/journal/$MACHINE_ID --no-pager
-   ```
-
-2. **Diagnostics service**: `modules/diagnostics.nix` writes hardware info to `/var/log/diagnostics.txt` on every boot. Read it from the mounted rootfs.
-
-3. **RetroArch verbose logs**: The service runs with `--verbose`, output goes to the journal.
-
-4. **U-Boot error.log**: On the boot/firmware partition (FAT32, first partition):
-   ```bash
-   sudo mount /dev/sdX1 /mnt
-   cat /mnt/error.log
-   ```
-
-5. **Roms card scripts** (for ArkOS): Can put shell scripts on the roms card that ArkOS runs from the Tools menu, writing output to the roms card. Used this to dump ArkOS dmesg for panel/hardware identification.
+If USB is not available, mount the SD card's ext4 partition to read the systemd journal:
+```bash
+sudo mount /dev/sdX2 /mnt
+MACHINE_ID=$(ls /mnt/var/log/journal/)
+journalctl -D /mnt/var/log/journal/$MACHINE_ID --no-pager
+```
 
 ### How we identified the panel
 
@@ -145,26 +168,18 @@ No USB host or gadget works on this device. No WiFi. The only way to get diagnos
 
 ### SD card layout
 
-MBR partitioning. U-Boot blobs at raw sector offsets before partition 1:
-
-| Blob | Sector | Byte offset |
-|------|--------|-------------|
-| idbloader.img | 64 | 32 KB |
-| uboot.img | 16384 | 8 MB |
-| trust.img | 24576 | 12 MB |
+MBR partitioning. Armbian U-Boot blob at raw sector 64:
 
 | Partition | Label | Type | Contents |
 |-----------|-------|------|----------|
-| 1 | FIRMWARE | FAT32 | kernel Image, uInitrd, DTBs, boot.ini |
-| 2 | NIXOS_SD | ext4 | NixOS rootfs |
+| 1 | FIRMWARE | FAT32 | Panel firmware (PanCho.ini, panel DTBs) |
+| 2 | NIXOS_SD | ext4 | NixOS rootfs, kernel/initrd/DTB at /boot |
 
-Second SD card slot (roms): `mmcblk0p1`, exFAT, mounts at `/roms` via systemd automount.
+Second SD card slot (roms): `mmcblk1p1`, exFAT, mounts at `/roms` via systemd automount.
 
 ### Kernel
 
-Mainline Linux stable + 7 patches from [ohjhas/linux-stable-rk3326](https://github.com/ohjhas/linux-stable-rk3326). Patches add GPIO joypad drivers, device trees, panel drivers, Bluetooth fixes, devfreq driver, and input-polldev. Plus our `dwc2_force_mode` patch for USB host mode (didn't fix USB but kept for completeness).
-
-Defconfig is `rk3326_defconfig` from the ohjhas repo. NixOS kernel config assertions are force-disabled (`system.requiredKernelConfig = lib.mkForce []`) because the defconfig is a fragment that `make olddefconfig` expands.
+Mainline Linux 6.19 via `linuxPackages_latest` with `structuredExtraConfig` for RK3326-specific modules (SARADC, GPIO, DRM, Panfrost, I2S, USB gadget). Out-of-tree modules for panel driver and joypad driver, exposed via `overlay.nix` as `pkgs.panel-generic-dsi` and `pkgs.rocknix-joypad`.
 
 ### parallel-n64 on aarch64
 
@@ -189,23 +204,18 @@ Applied optimizations:
 
 ### USB status
 
-Broken. Tried everything — `USB_ROLE_SWITCH`, `USB_DWC2_DUAL_ROLE`, `dr_mode` host/peripheral/otg, `dwc2_force_mode` kernel patch, PHY port enable/disable, `g_ether` gadget. Host mode gives error -71 (EPROTO). Gadget mode loads but host computer never sees the device.
-
-Next things to try (from `project_usb_fixup_notes.md` in memory):
-- `usbcore.old_scheme_first=1` in bootargs (dArkOSRE uses this)
-- dwc2 unbind/rebind cycle
-- Build dwc2 as module for runtime reset
-- Try kernel 6.11 (ROCKNIX's known-working version)
-- USB WiFi dongle with RTL8188EU driver
+Host mode broken (error -71). Gadget ethernet works (`g_ether` module, device at `10.0.0.2`).
 
 ### Conventions
 
-- Don't commit until the build succeeds
+- All `callPackage`'d packages go in `overlay.nix`, referenced via `pkgs.*`
 - Don't commit until tested on device if it's a functional change
 - Use `lib.getExe` / `lib.getExe'` instead of `${pkg}/bin/name`
 - RetroArch settings go in `modules/retroarch/settings.nix`, not inline
 - Custom packages go in `pkgs/`, exposed via `overlay.nix`
 - Device-specific config only in `handhelds/r36h/`
 - Shared modules in `modules/`
-- Build with remote store: `nix build --eval-store auto --store ssh-ng://nix@superintendent .#packages.aarch64-linux.r36h-image --impure`
-- Copy back: `nix copy --no-check-sigs --from ssh-ng://nix@superintendent $(nix eval --raw .#packages.aarch64-linux.r36h-image --impure)`
+- Long builds: `nix build` on remote store, then `nixos-rebuild` to deploy
+- Quick config changes: `nixos-rebuild switch` directly
+- Kernel/DTS changes: `nixos-rebuild boot` + reboot
+- Out-of-tree module changes don't require kernel rebuild
