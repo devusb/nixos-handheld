@@ -97,6 +97,8 @@ git worktree remove ~/code/nixos-handheld-mainline-kernel
 
 **Goal:** Cut kernel build from ~2hrs to ~15min by using a minimal config instead of full `linuxPackages_latest` defconfig.
 
+**Status:** DONE (2026-04-04). Build time reduced to ~5min using `linuxManualConfig` with custom defconfig. Tested and deployed.
+
 **Files:**
 - Create: `pkgs/kernel-rk3326/rk3326_defconfig` (minimal kernel config)
 - Modify: `pkgs/kernel-rk3326/default.nix` (switch from `linuxPackages_latest` to custom config)
@@ -107,32 +109,11 @@ git worktree remove ~/code/nixos-handheld-mainline-kernel
 - Andre Renaud's buildroot config (`github:AndreRenaud/buildroot-r36s`)
 - Running kernel config: `ssh root@10.0.0.2 "zcat /proc/config.gz"` (full defconfig, use as reference for what's actually loaded)
 
-- [ ] **Step 1: Gather reference configs**
-
-Clone/fetch the reference repos and compare their RK3326 configs. Identify the minimal set needed for our hardware:
-- RK3326 SoC support (clocks, pinctrl, thermal, etc.)
-- Panfrost GPU (DRM_PANFROST)
-- MIPI DSI display (DRM_ROCKCHIP, PHY_ROCKCHIP_INNO_DSIDPHY)
-- RK817 audio codec (SND_SOC_RK817, SND_SOC_ROCKCHIP_I2S)
-- USB dwc2 gadget (USB_DWC2, USB_GADGET, USB_ETH)
-- SARADC + GPIO (for joypad driver)
-- SD/MMC (for boot + roms card)
-- ext4, exFAT, zram
-- Input subsystem (evdev, joydev)
-
-- [ ] **Step 2: Create minimal defconfig**
-
-Start from one of the reference configs (ohjhas or ROCKNIX), update for 6.19 API changes, and trim further. Use `make olddefconfig` to fill in defaults.
-
-- [ ] **Step 3: Update kernel build to use custom defconfig**
-
-Modify `pkgs/kernel-rk3326/default.nix` to build from the custom defconfig instead of `linuxPackages_latest`. May need to switch from `linuxPackages_latest.kernel.override` to a custom `buildLinux` call.
-
-- [ ] **Step 4: Build and test**
-
-Build, deploy, verify everything still works: display, audio, joypad, USB gadget, second SD slot, suspend/resume.
-
-- [ ] **Step 5: Commit**
+- [x] **Step 1: Gather reference configs**
+- [x] **Step 2: Create minimal defconfig**
+- [x] **Step 3: Update kernel build to use custom defconfig**
+- [x] **Step 4: Build and test**
+- [x] **Step 5: Commit**
 
 ---
 
