@@ -27,6 +27,13 @@
   # Theme
   rgui_menu_color_theme = "20";
 
+  # Hide date/time (no RTC, clock is always wrong)
+  menu_timedate_enable = "false";
+
+  # Disable online features (no network)
+  menu_show_online_updater = "false";
+  menu_show_core_updater = "false";
+
   # Input
   input_player1_analog_dpad_mode = "1";
 
