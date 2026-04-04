@@ -21,6 +21,9 @@
     "${modulesPath}/profiles/base.nix"
   ];
 
+  hardware.enableAllHardware = lib.mkForce false;
+
+
   # Armbian U-Boot with ext4 support
   handheld.uboot = ./blobs/u-boot-rockchip.bin;
   handheld.bootIni = ./boot.ini;
@@ -48,6 +51,8 @@
   # Blacklist mainline NV3051D driver (lacks R36H-specific init sequence)
   boot.blacklistedKernelModules = [ "panel_newvision_nv3051d" ];
 
+  # Don't include default initrd modules (SCSI, SATA, virtio, etc.) — we specify hardware explicitly
+  boot.initrd.includeDefaultModules = false;
   # Load display modules early so DRM framebuffer is ready before stage-1
   boot.initrd.kernelModules = [
     "rockchipdrm"
