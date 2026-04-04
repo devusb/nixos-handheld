@@ -21,6 +21,7 @@ retroarch-bare.wrapper {
     opera
     mame2003-plus
     scummvm
+    picodrive
   ];
   inherit settings;
 }
