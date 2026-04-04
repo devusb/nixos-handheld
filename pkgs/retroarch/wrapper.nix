@@ -22,6 +22,7 @@ retroarch-bare.wrapper {
     mame2003-plus
     scummvm
     picodrive
+    ppsspp
   ];
   inherit settings;
 }
