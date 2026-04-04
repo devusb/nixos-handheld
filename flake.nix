@@ -43,6 +43,10 @@
         r36h-image = self.nixosConfigurations.r36h.config.system.build.sdImage;
       };
 
+      checks.${system} = {
+        nixos-r36h = self.nixosConfigurations.r36h.config.system.build.toplevel;
+      };
+
       formatter = eachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);
     };
 }
