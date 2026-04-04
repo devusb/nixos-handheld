@@ -1,10 +1,9 @@
 # SD card image module for RK3326 handhelds
 #
-# Wraps NixOS's built-in sd-image.nix which handles rootfs population,
-# activation, and nix DB correctly. We customize:
-#   - U-Boot blobs dd'd to raw sector offsets
-#   - FAT32 firmware partition repurposed for boot.ini + kernel + uInitrd + DTB
-#   - Partition layout matching RK3326 boot expectations
+# Wraps NixOS's built-in sd-image.nix. Customizes:
+#   - U-Boot blob dd'd to raw sector offset 64
+#   - FAT32 firmware partition for boot.ini + panel assets
+#   - Custom boot loader installer for generation support
 
 {
   config,
@@ -17,9 +16,18 @@
 let
   cfg = config.handheld;
 
-  idbloaderOffset = 64; # sector 64 = 32 KB
-  ubootOffset = 16384; # sector 16384 = 8 MB
-  trustOffset = 24576; # sector 24576 = 12 MB
+  # Boot loader installer script — called by nixos-rebuild switch/boot.
+  # Copies dereferenced kernel/initrd/DTB to fixed paths in /boot
+  # and updates /init symlink for the new generation.
+  installBootLoader = pkgs.writeShellScript "install-boot-loader" ''
+    export PATH=${pkgs.coreutils}/bin:$PATH
+    system="$1"
+
+    cp -L "$system/kernel" /boot/Image
+    cp -L "$system/initrd" /boot/initrd
+    cp -L "$system/dtbs/rockchip/rk3326-r36s.dtb" /boot/dtb
+    ln -sfn "$system/init" /init
+  '';
 in
 {
   imports = [
@@ -27,30 +35,9 @@ in
   ];
 
   options.handheld = {
-    bootBlobs = {
-      idbloader = lib.mkOption {
-        type = lib.types.path;
-        description = "Path to idbloader.img";
-      };
-      uboot = lib.mkOption {
-        type = lib.types.path;
-        description = "Path to uboot.img";
-      };
-      trust = lib.mkOption {
-        type = lib.types.path;
-        description = "Path to trust.img";
-      };
-    };
-
-    kernelDTB = lib.mkOption {
-      type = lib.types.str;
-      description = "Device tree blob filename on the boot partition";
-    };
-
-    kernelDTBPath = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
-      description = "Path to a custom DTB file. If null, uses the kernel's built-in DTB from dtbs/rockchip/";
+    uboot = lib.mkOption {
+      type = lib.types.path;
+      description = "Path to combined U-Boot blob (u-boot-rockchip.bin)";
     };
 
     bootIni = lib.mkOption {
@@ -58,73 +45,86 @@ in
       description = "Path to boot.ini U-Boot script";
     };
 
-    ubootDTB = lib.mkOption {
-      type = lib.types.path;
-      description = "Path to DTB for U-Boot's own display init (ArkOS BSP DTB)";
+    panChoIni = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Path to PanCho.ini panel chooser script";
+    };
+
+    logoEnv = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Path to logo.env for panel path";
+    };
+
+    panelDtbo = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Path to panel MIPI DTBO overlay";
+    };
+
+    panelDtb = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Path to panel kernel DTB for U-Boot display";
     };
   };
 
   config = {
-    # uInitrd: wrap NixOS initrd in uImage format for U-Boot
-    system.build.uInitrd =
-      pkgs.runCommand "uInitrd"
-        {
-          nativeBuildInputs = [ pkgs.ubootTools ];
-        }
-        ''
-          # -A arm (not arm64) — matches working ArkOS uInitrd header
-          mkimage -A arm -O linux -T ramdisk -C gzip \
-            -d ${config.system.build.initialRamdisk}/initrd \
-            $out
-        '';
-
-    boot.initrd.compressor = "gzip";
     boot.initrd.supportedFilesystems = [
       "ext4"
       "vfat"
     ];
 
-    # sd-image.nix configuration
+    # Custom boot loader — copies kernel/initrd/DTB to fixed paths in /boot
+    boot.loader.grub.enable = false;
+    boot.loader.generic-extlinux-compatible.enable = false;
+    system.build.installBootLoader = installBootLoader;
+    system.boot.loader.id = "handheld";
+
     sdImage = {
-      # Leave room for U-Boot blobs before partition 1
-      # U-Boot trust.img ends at sector 24576 + ~8192 = sector 32768 = 16 MB
-      firmwarePartitionOffset = 16; # MB — start of firmware/boot partition
+      firmwarePartitionOffset = 16; # MB
       firmwareSize = 100; # MB
 
-      # Populate the firmware (boot) partition with kernel, initrd, DTB, boot.ini
+      # Populate firmware (FAT) partition with boot.ini + panel assets
       populateFirmwareCommands = ''
-        cp ${config.system.build.kernel}/${pkgs.stdenv.hostPlatform.linux-kernel.target} firmware/Image
-        cp ${config.system.build.uInitrd} firmware/uInitrd
-        ${
-          if cfg.kernelDTBPath != null then
-            "cp ${cfg.kernelDTBPath} firmware/${cfg.kernelDTB}"
-          else
-            "cp ${config.system.build.kernel}/dtbs/rockchip/${cfg.kernelDTB} firmware/${cfg.kernelDTB}"
-        }
         cp ${cfg.bootIni} firmware/boot.ini
-        cp ${cfg.ubootDTB} firmware/gameconsole-r36s.dtb
+        ${lib.optionalString (cfg.panChoIni != null) "cp ${cfg.panChoIni} firmware/PanCho.ini"}
+        ${lib.optionalString (cfg.logoEnv != null) "cp ${cfg.logoEnv} firmware/logo.env"}
+        mkdir -p firmware/ScreenFiles/Panel4
+        ${lib.optionalString (cfg.panelDtbo != null) "cp ${cfg.panelDtbo} firmware/ScreenFiles/Panel4/mipi-panel.dtbo"}
+        ${lib.optionalString (cfg.panelDtb != null) "cp ${cfg.panelDtb} firmware/ScreenFiles/Panel4/rg351mp-kernel.dtb"}
       '';
 
-      # Write U-Boot blobs to raw offsets and fix partition type
+      # Write U-Boot blob + panel files with spaces in dir names
       postBuildCommands = ''
-        # Write U-Boot blobs at raw sector offsets
-        dd if=${cfg.bootBlobs.idbloader} of=$img bs=512 seek=${toString idbloaderOffset} conv=notrunc
-        dd if=${cfg.bootBlobs.uboot} of=$img bs=512 seek=${toString ubootOffset} conv=notrunc
-        dd if=${cfg.bootBlobs.trust} of=$img bs=512 seek=${toString trustOffset} conv=notrunc
+        dd if=${cfg.uboot} of=$img conv=fsync,notrunc bs=512 seek=64
+
+        fatOffset=$((START * 512))
+        export MTOOLS_SKIP_CHECK=1
+        ${lib.optionalString (cfg.panelDtbo != null) ''
+          mmd -i "$img@@$fatOffset" "::ScreenFiles/Panel 4"
+          mcopy -i "$img@@$fatOffset" ${cfg.panelDtbo} "::ScreenFiles/Panel 4/mipi-panel.dtbo"
+        ''}
+        ${lib.optionalString (cfg.panelDtb != null) ''
+          mcopy -i "$img@@$fatOffset" ${cfg.panelDtb} "::ScreenFiles/Panel 4/rg351mp-kernel.dtb"
+        ''}
       '';
 
-      # No extlinux — we use boot.ini
-      # But we still need /init symlink for the initrd to find stage-2
+      # Populate rootfs with initial /boot contents
       populateRootCommands = ''
         mkdir -p ./files/boot
+
+        # Dereference and copy kernel/initrd/DTB to fixed paths
+        cp -L ${config.system.build.toplevel}/kernel ./files/boot/Image
+        cp -L ${config.system.build.toplevel}/initrd ./files/boot/initrd
+        cp -L ${config.system.build.toplevel}/dtbs/rockchip/rk3326-r36s.dtb ./files/boot/dtb
+
+        # /init symlink for this generation
         ln -s ${config.system.build.toplevel}/init ./files/init
       '';
 
       compressImage = true;
     };
-
-    # Disable GRUB — U-Boot + boot.ini handles booting
-    boot.loader.grub.enable = false;
-    boot.loader.generic-extlinux-compatible.enable = false;
   };
 }

@@ -1,4 +1,2 @@
 result
 result-*
-# User-provided boot blobs (binary, not committed)
-handhelds/*/boot/*.img

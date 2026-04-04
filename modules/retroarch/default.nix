@@ -28,6 +28,7 @@ in
     description = "RetroArch";
     wantedBy = [ "multi-user.target" ];
     after = [ "systemd-user-sessions.service" ];
+    restartIfChanged = false;
     serviceConfig = {
       User = "gamer";
       Group = "users";
