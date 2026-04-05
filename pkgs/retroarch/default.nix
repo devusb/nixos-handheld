@@ -25,6 +25,12 @@
       "--disable-x11"
       "--disable-xinerama"
       "--disable-xrandr"
+      # Panfrost on Mali-G31 serves GLES 3.1 better than its partial GL 3.1 compat
+      # profile, and libretro cores on ARM (mupen64plus-next, parallel-n64, ppsspp)
+      # target GLES. GL and GLES are mutually exclusive in RetroArch's build.
+      "--disable-opengl"
+      "--enable-opengles"
+      "--enable-opengles3"
     ];
     patches = (old.patches or [ ]) ++ [
       ./odroidgo2-features.patch

@@ -19,6 +19,7 @@ final: prev: {
   libretro = prev.libretro // {
     parallel-n64 = final.callPackage ./pkgs/parallel-n64 { libretro = prev.libretro; };
     ppsspp = final.callPackage ./pkgs/ppsspp { libretro = prev.libretro; };
+    mupen64plus = final.callPackage ./pkgs/mupen64plus { libretro = prev.libretro; };
   };
 
   sdl3 = final.callPackage ./pkgs/sdl3 { sdl3 = prev.sdl3; };

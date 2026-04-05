@@ -36,6 +36,8 @@
 
   # Input
   input_player1_analog_dpad_mode = "1";
+  # Stick amplification — kernel deadzone is wide enough that 1.0x feels mushy
+  input_analog_sensitivity = "2.0";
 
   # Hotkeys
   input_menu_toggle_btn = "nul";
