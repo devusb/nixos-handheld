@@ -1,5 +1,5 @@
 final: prev: {
-  linux-rk3326 = final.callPackage ./pkgs/kernel-rk3326 {
+  linux-rk3326 = final.callPackage ./pkgs/linux-rk3326 {
     linuxPackages_latest = prev.linuxPackages_latest;
   };
 
