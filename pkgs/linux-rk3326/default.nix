@@ -41,19 +41,10 @@ in
     configfile
     ;
   allowImportFromDerivation = true;
-  kernelPatches = [
-    {
-      name = "r36s-makefile";
-      patch = ./patches/0001-add-r36s-to-makefile.patch;
-    }
-  ];
   extraMeta.branch = lib.versions.majorMinor version;
 }).overrideAttrs
   (old: {
     passthru = (old.passthru or { }) // {
       features = { };
     };
-    postPatch = (old.postPatch or "") + ''
-      cp ${./rk3326-r36s.dts} arch/arm64/boot/dts/rockchip/rk3326-r36s.dts
-    '';
   })

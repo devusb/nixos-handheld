@@ -31,10 +31,10 @@
   handheld.panelDtbo = ./firmware/panel4/mipi-panel.dtbo;
   handheld.panelDtb = ./firmware/panel4/rg351mp-kernel.dtb;
 
-  # Linux DTB: built from kernel source with R36S DTS patch
+  # Linux DTB: compiled standalone from our DTS (no kernel rebuild on DTS changes)
   hardware.deviceTree = {
     enable = true;
-    filter = "*rk3326-r36s.dtb";
+    dtbSource = "${pkgs.rk3326-dtb}";
     name = "rockchip/rk3326-r36s.dtb";
   };
 
