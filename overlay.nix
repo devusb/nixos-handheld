@@ -3,6 +3,10 @@ final: prev: {
     linuxPackages_latest = prev.linuxPackages_latest;
   };
 
+  rk3326-dtb = final.callPackage ./pkgs/rk3326-dtb {
+    kernel = final.linux-rk3326;
+  };
+
   retroarch-joypad-autoconfig = final.callPackage ./pkgs/retroarch-joypad-autoconfig {
     retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig;
   };
