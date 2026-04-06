@@ -23,6 +23,7 @@ retroarch-bare.wrapper {
     scummvm
     picodrive
     ppsspp
+    flycast
   ];
   inherit settings;
 }

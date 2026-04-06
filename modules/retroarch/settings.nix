@@ -53,4 +53,7 @@
   system_directory = "/roms/bios";
   savefile_directory = "/roms/saves";
   savestate_directory = "/roms/states";
+
+  # Pin to stable symlink so retroarch.cfg can't cache a stale nix store path
+  libretro_directory = "/run/retroarch/cores";
 }
