@@ -5,6 +5,7 @@ libretro.mupen64plus.overrideAttrs (_old: {
   # Panfrost on Mali-G31 exposes GL 3.1 / GLES 3.1 — no desktop GL 3.3 core context.
   # FORCE_GLES3=1 switches GLideN64 to a GLES3 context so EGL can match.
   # parallel-rdp / parallel-rsp are Vulkan-only; Panfrost Mali-G31 has no Vulkan driver.
+  env.NIX_CFLAGS_COMPILE = "-O3 -ffast-math";
   makeFlags = [
     "platform=unix"
     "ARCH=arm64"

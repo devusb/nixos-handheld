@@ -2,6 +2,7 @@
   menu_driver = "rgui";
   rgui_aspect_ratio_lock = "2";
   audio_driver = "alsa";
+  audio_latency = "64";
   input_driver = "udev";
   input_joypad_driver = "udev";
   savestate_auto_load = "true";
@@ -23,6 +24,10 @@
 
   # Video — 2x scale fits 640x480 (320x240 core * 2)
   video_scale = "2";
+  video_vsync = "false";
+  video_smooth = "false";
+  video_shader_enable = "false";
+  video_threaded = "true";
 
   # Theme
   rgui_menu_color_theme = "20";

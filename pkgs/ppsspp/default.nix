@@ -10,4 +10,5 @@ libretro.ppsspp.overrideAttrs (old: {
   cmakeFlags = (old.cmakeFlags or [ ]) ++ [
     "-DUSING_GLES2=ON"
   ];
+  env.NIX_CFLAGS_COMPILE = "-O3 -ffast-math";
 })
