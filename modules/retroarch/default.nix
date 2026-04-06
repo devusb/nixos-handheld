@@ -29,6 +29,7 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [ "systemd-user-sessions.service" ];
     restartIfChanged = false;
+    preStart = "${lib.getExe' pkgs.coreutils "ln"} -sfn ${retroarchPkg}/lib/retroarch/cores /run/retroarch/cores";
     serviceConfig = {
       User = "gamer";
       Group = "users";
