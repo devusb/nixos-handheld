@@ -60,7 +60,7 @@ let
     };
     psx = {
       fullname = "PlayStation";
-      extensions = ".bin .cue .pbp .chd .BIN .CUE .PBP .CHD .zip .ZIP .7z";
+      extensions = ".bin .cue .pbp .chd .m3u .BIN .CUE .PBP .CHD .M3U .zip .ZIP .7z";
       core = "pcsx_rearmed";
       platform = "psx";
     };
