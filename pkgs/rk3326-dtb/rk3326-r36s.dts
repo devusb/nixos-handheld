@@ -820,6 +820,21 @@
 	status = "okay";
 };
 
+/* RGA2 2D blitter — BSP driver (out-of-tree module) for hardware-accelerated
+ * surface compositing. Address and clocks match BSP px30.dtsi rk_rga node.
+ * Clock names use BSP convention (aclk_rga/hclk_rga/clk_rga) not mainline. */
+/ {
+	rk_rga: rga@ff480000 {
+		compatible = "rockchip,rga2";
+		reg = <0x0 0xff480000 0x0 0x1000>;
+		interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&cru ACLK_RGA>, <&cru HCLK_RGA>, <&cru SCLK_RGA_CORE>;
+		clock-names = "aclk_rga", "hclk_rga", "clk_rga";
+		power-domains = <&power PX30_PD_VO>;
+		status = "okay";
+	};
+};
+
 &pinctrl {
 	btns {
 		btn_pins: btn-pins {
