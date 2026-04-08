@@ -1,0 +1,175 @@
+From b71cef91f04ad72a73cf3092ad0a153a5b6e18a4 Mon Sep 17 00:00:00 2001
+From: Morgan Helton <mhelton@gmail.com>
+Date: Tue, 7 Apr 2026 22:59:52 -0500
+Subject: [PATCH 1/2] fix: NixOS/mainline compatibility patches for 351v branch
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Add missing #include <cstdint> for GCC 15 (4 files)
+- Comment out dead go2/audio.h and drm_fourcc.h includes
+- Fix GLES context: add SDL_GL_CONTEXT_PROFILE_ES, fix duplicate
+  MAJOR_VERSION → MINOR_VERSION
+- Resource path uses @out@ placeholder for Nix store injection
+- FindSDL2MIXER.cmake uses @sdl2MixerDev@/@sdl2MixerLib@ placeholders
+- CMakeLists.txt adds SDL2_mixer include via @sdl2MixerDev@ placeholder
+---
+ CMake/Packages/FindSDL2MIXER.cmake        | 8 ++++----
+ CMakeLists.txt                            | 1 +
+ es-app/src/ApiSystem.cpp                  | 1 +
+ es-core/src/BrightnessControl.cpp         | 1 +
+ es-core/src/DisplayPanelControl.cpp       | 1 +
+ es-core/src/renderers/Renderer_GLES10.cpp | 8 +++++---
+ es-core/src/resources/ResourceManager.cpp | 2 +-
+ es-core/src/utils/StringUtil.cpp          | 1 +
+ 8 files changed, 15 insertions(+), 8 deletions(-)
+
+diff --git a/CMake/Packages/FindSDL2MIXER.cmake b/CMake/Packages/FindSDL2MIXER.cmake
+index ce180118..39c78fc1 100644
+--- a/CMake/Packages/FindSDL2MIXER.cmake
++++ b/CMake/Packages/FindSDL2MIXER.cmake
+@@ -16,14 +16,14 @@ ELSE(SDL2_Mixer_INCLUDE_DIRS)
+ 
+   SET(TRIAL_LIBRARY_PATHS
+     $ENV{SDL2_MIXER_HOME}/lib
+-    /usr/lib
+-    /usr/local/lib
++    @sdl2MixerLib@/lib
++    @sdl2MixerLib@/lib
+     /sw/lib
+   ) 
+   SET(TRIAL_INCLUDE_PATHS
+     $ENV{SDL2_MIXER_HOME}/include/SDL2
+-    /usr/include/SDL2
+-    /usr/local/include/SDL2
++    @sdl2MixerDev@/include/SDL2
++    @sdl2MixerDev@/include/SDL2
+     /sw/include/SDL2
+   ) 
+ 
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fb60e26a..d52f79c4 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,6 +6,7 @@ option(RPI "Set to ON to enable the Raspberry PI video player (omxplayer)" ${RPI
+ option(CEC "Set to ON to enable CEC" ${CEC})
+ 
+ project(emulationstation-all)
++include_directories(@sdl2MixerDev@/include/SDL2)
+ 
+ #-------------------------------------------------------------------------------
+ #add local find scripts to CMAKE path
+diff --git a/es-app/src/ApiSystem.cpp b/es-app/src/ApiSystem.cpp
+index 8911b238..1537ff26 100644
+--- a/es-app/src/ApiSystem.cpp
++++ b/es-app/src/ApiSystem.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "ApiSystem.h"
+ #include "DisplayPanelControl.h"
+diff --git a/es-core/src/BrightnessControl.cpp b/es-core/src/BrightnessControl.cpp
+index c1b86743..158c5917 100644
+--- a/es-core/src/BrightnessControl.cpp
++++ b/es-core/src/BrightnessControl.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "BrightnessControl.h"
+ 
+diff --git a/es-core/src/DisplayPanelControl.cpp b/es-core/src/DisplayPanelControl.cpp
+index 744c880e..59134947 100644
+--- a/es-core/src/DisplayPanelControl.cpp
++++ b/es-core/src/DisplayPanelControl.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "DisplayPanelControl.h"
+ 
+diff --git a/es-core/src/renderers/Renderer_GLES10.cpp b/es-core/src/renderers/Renderer_GLES10.cpp
+index 1472af08..228c2df6 100644
+--- a/es-core/src/renderers/Renderer_GLES10.cpp
++++ b/es-core/src/renderers/Renderer_GLES10.cpp
+@@ -14,8 +14,9 @@
+ 
+ //#include <go2/display.h>
+ //#include <go2/input.h>
+-#include <go2/audio.h>
+-#include <drm/drm_fourcc.h>
++// go2 removed — using SDL2 KMSDRM
++// #include <go2/audio.h>
++// #include <drm/drm_fourcc.h>
+ //#include "BatteryIcons.h"
+ //#include "VolumeIcons.h"
+ //#include "WifiIcons.h"
+@@ -92,8 +93,9 @@ namespace Renderer
+ 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
+ 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+ 
++		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+ 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 0);
++		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+ //#endif
+ 	} // setupWindow
+ 
+diff --git a/es-core/src/resources/ResourceManager.cpp b/es-core/src/resources/ResourceManager.cpp
+index 187d00b4..aa844712 100644
+--- a/es-core/src/resources/ResourceManager.cpp
++++ b/es-core/src/resources/ResourceManager.cpp
+@@ -35,7 +35,7 @@ std::string ResourceManager::getResourcePath(const std::string& path) const
+ 			return test;
+ 
+ 		// check in exepath
+-		test = Utils::FileSystem::getExePath() + "/resources/" + &path[2];
++		test = "@out@/share/emulationstation/resources/" + std::string(&path[2]);
+ 		if(Utils::FileSystem::exists(test))
+ 			return test;
+ 
+diff --git a/es-core/src/utils/StringUtil.cpp b/es-core/src/utils/StringUtil.cpp
+index d5ca0595..72cf9b50 100644
+--- a/es-core/src/utils/StringUtil.cpp
++++ b/es-core/src/utils/StringUtil.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "utils/StringUtil.h"
+ 
+-- 
+2.53.0
+
+
+From d89fc8841381f821fa3e268488bd20f0097a03d8 Mon Sep 17 00:00:00 2001
+From: Morgan Helton <mhelton@gmail.com>
+Date: Wed, 8 Apr 2026 07:04:53 -0500
+Subject: [PATCH 2/2] fix: lower analog stick deadzone for cheap ADC sticks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The R36H's analog sticks use a GPIO-muxed single-ADC design with
+asymmetric physical range. Full left deflection on ABS_X only reaches
+~-1200 out of the declared -1800 range, which SDL normalizes to ~21845
+— below the previous 23000 deadzone threshold.
+
+Lower to 12000 (~37% of range) so all directions register reliably.
+---
+ es-core/src/InputManager.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/es-core/src/InputManager.h b/es-core/src/InputManager.h
+index 0fa5e4c8..152f10d6 100644
+--- a/es-core/src/InputManager.h
++++ b/es-core/src/InputManager.h
+@@ -18,7 +18,7 @@ private:
+ 
+ 	static InputManager* mInstance;
+ 
+-	static const int DEADZONE = 23000;
++	static const int DEADZONE = 12000;
+ 
+ 	void loadDefaultKBConfig();
+ 
+-- 
+2.53.0
+
