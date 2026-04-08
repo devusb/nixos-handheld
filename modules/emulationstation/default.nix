@@ -154,12 +154,12 @@ in
             [ -f /tmp/es-restart ] && continue
             if [ -f /tmp/es-sysrestart ]; then
               rm -f /tmp/es-sysrestart
-              sudo systemctl reboot
+              /run/wrappers/bin/sudo ${lib.getExe' pkgs.systemd "systemctl"} reboot
               break
             fi
             if [ -f /tmp/es-shutdown ]; then
               rm -f /tmp/es-shutdown
-              sudo systemctl poweroff
+              /run/wrappers/bin/sudo ${lib.getExe' pkgs.systemd "systemctl"} poweroff
               break
             fi
             break
@@ -174,8 +174,8 @@ in
     security.sudo.extraRules = [{
       users = [ cfg.user ];
       commands = [
-        { command = "/run/current-system/sw/bin/systemctl reboot"; options = [ "NOPASSWD" ]; }
-        { command = "/run/current-system/sw/bin/systemctl poweroff"; options = [ "NOPASSWD" ]; }
+        { command = "${lib.getExe' pkgs.systemd "systemctl"} reboot"; options = [ "NOPASSWD" ]; }
+        { command = "${lib.getExe' pkgs.systemd "systemctl"} poweroff"; options = [ "NOPASSWD" ]; }
       ];
     }];
 

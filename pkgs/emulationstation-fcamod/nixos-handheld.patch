@@ -1,7 +1,7 @@
 From b71cef91f04ad72a73cf3092ad0a153a5b6e18a4 Mon Sep 17 00:00:00 2001
 From: Morgan Helton <mhelton@gmail.com>
 Date: Tue, 7 Apr 2026 22:59:52 -0500
-Subject: [PATCH 1/2] fix: NixOS/mainline compatibility patches for 351v branch
+Subject: [PATCH 1/3] fix: NixOS/mainline compatibility patches for 351v branch
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -142,7 +142,7 @@ index d5ca0595..72cf9b50 100644
 From d89fc8841381f821fa3e268488bd20f0097a03d8 Mon Sep 17 00:00:00 2001
 From: Morgan Helton <mhelton@gmail.com>
 Date: Wed, 8 Apr 2026 07:04:53 -0500
-Subject: [PATCH 2/2] fix: lower analog stick deadzone for cheap ADC sticks
+Subject: [PATCH 2/3] fix: lower analog stick deadzone for cheap ADC sticks
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -170,6 +170,39 @@ index 0fa5e4c8..152f10d6 100644
  
  	void loadDefaultKBConfig();
  
+-- 
+2.53.0
+
+
+From 525bfd222a7c31b7a7f9311a17bc7134cf4b4076 Mon Sep 17 00:00:00 2001
+From: Morgan Helton <mhelton@gmail.com>
+Date: Wed, 8 Apr 2026 17:58:22 -0500
+Subject: [PATCH 3/3] fix: hide cursor on SDL reinit after game launch
+
+SDL_ShowCursor(0) was only called on first init (windowWidth == 0).
+When ES reinits after returning from a game (HideWindow=true tears
+down SDL before launch), the cursor wasn't re-hidden, causing a
+stale hardware cursor from the launched app (e.g. DraStic) to
+persist on screen.
+---
+ es-core/src/renderers/Renderer.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/es-core/src/renderers/Renderer.cpp b/es-core/src/renderers/Renderer.cpp
+index c8481918..b08c83ae 100644
+--- a/es-core/src/renderers/Renderer.cpp
++++ b/es-core/src/renderers/Renderer.cpp
+@@ -89,6 +89,10 @@ namespace Renderer
+ 			initialCursorState = (SDL_ShowCursor(0) != 0);
+ 			SDL_GetDesktopDisplayMode(0, &dispMode);
+ 		}
++		else
++		{
++			SDL_ShowCursor(0);
++		}
+ 
+ 		if (!Settings::getInstance()->getBool("Windowed"))
+ 			SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
 -- 
 2.53.0
 
