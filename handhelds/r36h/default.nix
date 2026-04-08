@@ -112,7 +112,9 @@
 
   users.users.root.initialPassword = "nixos";
 
-  # Kiosk mode — RetroArch owns the display
+  # EmulationStation frontend — launches RetroArch cores and DraStic
+  handheld.emulationstation.enable = true;
+
   console.enable = false;
   documentation.enable = false;
 
