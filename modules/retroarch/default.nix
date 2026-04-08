@@ -6,47 +6,58 @@
 }:
 
 let
-  retroarchSettings = import ./settings.nix;
-  retroarchPkg = pkgs.retroarch-handheld.override {
-    settings = retroarchSettings;
-  };
+  cfg = config.handheld.retroarch;
 in
 {
-  # Gamer user — runs RetroArch
-  users.users.gamer = {
-    isNormalUser = true;
-    uid = 1000;
-    extraGroups = [
-      "input"
-      "video"
-      "audio"
-    ];
-  };
-
-  # RetroArch as systemd service — direct DRM/KMS, no compositor
-  systemd.services.retroarch = {
-    description = "RetroArch";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "systemd-user-sessions.service" ];
-    restartIfChanged = false;
-    preStart = "${lib.getExe' pkgs.coreutils "ln"} -sfn ${retroarchPkg}/lib/retroarch/cores /run/retroarch/cores";
-    serviceConfig = {
-      User = "gamer";
-      Group = "users";
-      Restart = "on-abnormal";
-      RestartSec = "2";
-      RuntimeDirectory = "retroarch";
-      Environment = [
-        "XDG_RUNTIME_DIR=/run/retroarch"
-        "HOME=/home/gamer"
-      ];
-      ExecStart = "${lib.getExe retroarchPkg} --verbose";
-      # Clean quit (exit 0) triggers poweroff — this is intentional for kiosk mode.
-      # Crashes (signals) trigger restart via on-abnormal.
-      # To debug without shutdown: systemctl mask retroarch-poweroff.service
-      ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
+  options.handheld.retroarch = {
+    enable = lib.mkEnableOption "RetroArch kiosk mode (boots directly to RetroArch)";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.retroarch-handheld.override {
+        settings = import ./settings.nix;
+      };
+      description = "RetroArch package to use.";
+    };
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "gamer";
+      description = "User account to run RetroArch as.";
     };
   };
 
-  environment.systemPackages = [ retroarchPkg ];
+  config = lib.mkIf cfg.enable {
+    users.users.${cfg.user} = {
+      isNormalUser = true;
+      uid = 1000;
+      extraGroups = [
+        "input"
+        "video"
+        "audio"
+      ];
+    };
+
+    # RetroArch as systemd service — direct DRM/KMS, no compositor
+    systemd.services.retroarch = {
+      description = "RetroArch";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "systemd-user-sessions.service" ];
+      restartIfChanged = false;
+      preStart = "${lib.getExe' pkgs.coreutils "ln"} -sfn ${cfg.package}/lib/retroarch/cores /run/retroarch/cores";
+      serviceConfig = {
+        User = cfg.user;
+        Group = "users";
+        Restart = "on-abnormal";
+        RestartSec = "2";
+        RuntimeDirectory = "retroarch";
+        Environment = [
+          "XDG_RUNTIME_DIR=/run/retroarch"
+          "HOME=/home/${cfg.user}"
+        ];
+        ExecStart = "${lib.getExe cfg.package} --verbose";
+        ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
+      };
+    };
+
+    environment.systemPackages = [ cfg.package ];
+  };
 }
