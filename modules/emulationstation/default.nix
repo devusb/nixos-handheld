@@ -38,6 +38,10 @@ in
       default = pkgs.emulationstation-fcamod;
       description = "EmulationStation package to use.";
     };
+    drastic.configFile = lib.mkOption {
+      type = lib.types.path;
+      description = "DraStic configuration file (button mappings and emulation settings).";
+    };
     retroarchPackage = lib.mkOption {
       type = lib.types.package;
       default = pkgs.retroarch-handheld.override {
@@ -158,7 +162,7 @@ in
       };
       "/var/lib/drastic/config/drastic.cfg" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/config/drastic.cfg";
+          argument = "${cfg.drastic.configFile}";
         };
       };
     };

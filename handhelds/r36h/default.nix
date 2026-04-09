@@ -114,6 +114,7 @@
 
   # EmulationStation frontend — launches RetroArch cores and DraStic
   handheld.emulationstation.enable = true;
+  handheld.emulationstation.drastic.configFile = ./drastic.cfg;
 
   console.enable = false;
   documentation.enable = false;

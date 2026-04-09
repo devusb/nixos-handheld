@@ -50,10 +50,6 @@ stdenv.mkDerivation {
     mkdir -p $out/share/drastic/system
     cp system/drastic_bios_arm7.bin system/drastic_bios_arm9.bin $out/share/drastic/system/
 
-    # Default config (R36S button mapping)
-    mkdir -p $out/share/drastic/config
-    cp ${./drastic.cfg} $out/share/drastic/config/drastic.cfg
-
     # Wrapper: cd to state dir, symlink store data, run binary
     # State dir (/var/lib/drastic) is set up by the ES module via tmpfiles
     makeWrapper $out/share/drastic/drastic $out/bin/drastic \
