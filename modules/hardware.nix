@@ -44,24 +44,6 @@
     alsa-utils
   ];
 
-  # Volume buttons — gpio-keys-vol on /dev/input/event2
-  services.triggerhappy = {
-    enable = true;
-    user = "root";
-    bindings = [
-      {
-        keys = [ "VOLUMEUP" ];
-        event = "press";
-        cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%+";
-      }
-      {
-        keys = [ "VOLUMEDOWN" ];
-        event = "press";
-        cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%-";
-      }
-    ];
-  };
-
   powerManagement.cpuFreqGovernor = "ondemand";
 
   # Minimize SD card writes
