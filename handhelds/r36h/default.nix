@@ -127,6 +127,7 @@
     evtest
     lsof
     pciutils
+    vim
   ];
 
   system.stateVersion = "25.11";
