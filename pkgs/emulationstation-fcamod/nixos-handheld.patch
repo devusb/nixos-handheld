@@ -1,0 +1,164 @@
+diff --git a/CMake/Packages/FindSDL2MIXER.cmake b/CMake/Packages/FindSDL2MIXER.cmake
+index ce180118..39c78fc1 100644
+--- a/CMake/Packages/FindSDL2MIXER.cmake
++++ b/CMake/Packages/FindSDL2MIXER.cmake
+@@ -16,14 +16,14 @@ ELSE(SDL2_Mixer_INCLUDE_DIRS)
+ 
+   SET(TRIAL_LIBRARY_PATHS
+     $ENV{SDL2_MIXER_HOME}/lib
+-    /usr/lib
+-    /usr/local/lib
++    @sdl2MixerLib@/lib
++    @sdl2MixerLib@/lib
+     /sw/lib
+   ) 
+   SET(TRIAL_INCLUDE_PATHS
+     $ENV{SDL2_MIXER_HOME}/include/SDL2
+-    /usr/include/SDL2
+-    /usr/local/include/SDL2
++    @sdl2MixerDev@/include/SDL2
++    @sdl2MixerDev@/include/SDL2
+     /sw/include/SDL2
+   ) 
+ 
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fb60e26a..d52f79c4 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,6 +6,7 @@ option(RPI "Set to ON to enable the Raspberry PI video player (omxplayer)" ${RPI
+ option(CEC "Set to ON to enable CEC" ${CEC})
+ 
+ project(emulationstation-all)
++include_directories(@sdl2MixerDev@/include/SDL2)
+ 
+ #-------------------------------------------------------------------------------
+ #add local find scripts to CMAKE path
+diff --git a/es-app/src/ApiSystem.cpp b/es-app/src/ApiSystem.cpp
+index 8911b238..1537ff26 100644
+--- a/es-app/src/ApiSystem.cpp
++++ b/es-app/src/ApiSystem.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "ApiSystem.h"
+ #include "DisplayPanelControl.h"
+diff --git a/es-app/src/guis/GuiMenu.cpp b/es-app/src/guis/GuiMenu.cpp
+index 09305141..602bd611 100644
+--- a/es-app/src/guis/GuiMenu.cpp
++++ b/es-app/src/guis/GuiMenu.cpp
+@@ -82,9 +82,7 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
+ 	
+ 	addEntry(_("QUIT"), !Settings::getInstance()->getBool("ShowOnlyExit"), [this] {openQuitMenu(); }, "iconQuit");
+ 
+-	addEntry(_("BAT") + ": " + std::string(getShOutput(R"(cat /sys/class/power_supply/battery/capacity)")) + "%" + " | " + _("SND") + ": " + std::string(getShOutput(R"(current_volume)")) + " | " + _("BRT") + ": " + std::to_string(ApiSystem::getInstance()->getBrightnessLevel()) + "% | " + _("WIFI") + ": " + std::string(getShOutput(R"(if [ -z $(cat /sys/class/net/wlan0/operstate) ]; then echo "Off"; else cat /sys/class/net/wlan0/operstate; fi)")), false, [this] {  });
+-
+-	addEntry(_("Distro Version") + ": " + std::string(getShOutput(R"(cat /usr/share/plymouth/themes/text.plymouth | grep title | cut -c 7-50)")), false, [this] {  });
++	addEntry(_("BAT") + ": " + std::string(getShOutput(R"(cat /sys/class/power_supply/rk817-battery/capacity 2>/dev/null || echo "?")")) + "%" + " | " + _("SND") + ": " + std::string(getShOutput(R"(@amixer@ -c 0 get Master 2>/dev/null | grep -o '[0-9]*%' | head -1 || echo "?")")) + " | " + _("BRT") + ": " + std::to_string(ApiSystem::getInstance()->getBrightnessLevel()) + "% | " + _("WIFI") + ": " + std::string(getShOutput(R"(cat /sys/class/net/wlan0/operstate 2>/dev/null || echo "N/A")")), false, [this] {  });
+ 
+ 	addChild(&mMenu);
+ 	addVersionInfo();
+@@ -1711,7 +1709,8 @@ void GuiMenu::openOtherSettings()
+ 			if (!setRepo.empty())
+ 			  mWindow->displayNotificationMessage(setRepo);
+ 		}
+-		SystemConf::getInstance()->set("system.timezone", es_timezones->getSelected());
++		if (!es_timezones->getSelectedObjects().empty())
++			SystemConf::getInstance()->set("system.timezone", es_timezones->getSelected());
+ 	});
+ 
+ 	// Clock time format (14:42 or 2:42 pm)
+diff --git a/es-core/src/BrightnessControl.cpp b/es-core/src/BrightnessControl.cpp
+index c1b86743..158c5917 100644
+--- a/es-core/src/BrightnessControl.cpp
++++ b/es-core/src/BrightnessControl.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "BrightnessControl.h"
+ 
+diff --git a/es-core/src/DisplayPanelControl.cpp b/es-core/src/DisplayPanelControl.cpp
+index 744c880e..59134947 100644
+--- a/es-core/src/DisplayPanelControl.cpp
++++ b/es-core/src/DisplayPanelControl.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "DisplayPanelControl.h"
+ 
+diff --git a/es-core/src/InputManager.h b/es-core/src/InputManager.h
+index 0fa5e4c8..152f10d6 100644
+--- a/es-core/src/InputManager.h
++++ b/es-core/src/InputManager.h
+@@ -18,7 +18,7 @@ private:
+ 
+ 	static InputManager* mInstance;
+ 
+-	static const int DEADZONE = 23000;
++	static const int DEADZONE = 12000;
+ 
+ 	void loadDefaultKBConfig();
+ 
+diff --git a/es-core/src/renderers/Renderer.cpp b/es-core/src/renderers/Renderer.cpp
+index c8481918..b08c83ae 100644
+--- a/es-core/src/renderers/Renderer.cpp
++++ b/es-core/src/renderers/Renderer.cpp
+@@ -89,6 +89,10 @@ namespace Renderer
+ 			initialCursorState = (SDL_ShowCursor(0) != 0);
+ 			SDL_GetDesktopDisplayMode(0, &dispMode);
+ 		}
++		else
++		{
++			SDL_ShowCursor(0);
++		}
+ 
+ 		if (!Settings::getInstance()->getBool("Windowed"))
+ 			SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
+diff --git a/es-core/src/renderers/Renderer_GLES10.cpp b/es-core/src/renderers/Renderer_GLES10.cpp
+index 1472af08..228c2df6 100644
+--- a/es-core/src/renderers/Renderer_GLES10.cpp
++++ b/es-core/src/renderers/Renderer_GLES10.cpp
+@@ -14,8 +14,9 @@
+ 
+ //#include <go2/display.h>
+ //#include <go2/input.h>
+-#include <go2/audio.h>
+-#include <drm/drm_fourcc.h>
++// go2 removed — using SDL2 KMSDRM
++// #include <go2/audio.h>
++// #include <drm/drm_fourcc.h>
+ //#include "BatteryIcons.h"
+ //#include "VolumeIcons.h"
+ //#include "WifiIcons.h"
+@@ -92,8 +93,9 @@ namespace Renderer
+ 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
+ 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+ 
++		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+ 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 0);
++		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+ //#endif
+ 	} // setupWindow
+ 
+diff --git a/es-core/src/resources/ResourceManager.cpp b/es-core/src/resources/ResourceManager.cpp
+index 187d00b4..aa844712 100644
+--- a/es-core/src/resources/ResourceManager.cpp
++++ b/es-core/src/resources/ResourceManager.cpp
+@@ -35,7 +35,7 @@ std::string ResourceManager::getResourcePath(const std::string& path) const
+ 			return test;
+ 
+ 		// check in exepath
+-		test = Utils::FileSystem::getExePath() + "/resources/" + &path[2];
++		test = "@out@/share/emulationstation/resources/" + std::string(&path[2]);
+ 		if(Utils::FileSystem::exists(test))
+ 			return test;
+ 
+diff --git a/es-core/src/utils/StringUtil.cpp b/es-core/src/utils/StringUtil.cpp
+index d5ca0595..72cf9b50 100644
+--- a/es-core/src/utils/StringUtil.cpp
++++ b/es-core/src/utils/StringUtil.cpp
+@@ -1,3 +1,4 @@
++#include <cstdint>
+ #include <string>
+ #include "utils/StringUtil.h"
+ 

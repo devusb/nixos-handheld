@@ -17,7 +17,7 @@ without requiring HAVE_LAKKA or HAVE_ODROIDGO2.
  #endif
 
 -#ifdef HAVE_LAKKA
-+#if 1
++#if 0
     /* Reset brightness to maximum */
     if (settings->uints.screen_brightness != DEFAULT_SCREEN_BRIGHTNESS)
        frontend_unix_set_screen_brightness(DEFAULT_SCREEN_BRIGHTNESS);

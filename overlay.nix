@@ -32,4 +32,16 @@ final: prev: {
   rocknix-joypad = final.callPackage ./pkgs/rocknix-joypad {
     kernel = final.linux-rk3326;
   };
+
+  SDL2_classic = final.callPackage ./pkgs/SDL2_classic { };
+
+  freeimage = final.callPackage ./pkgs/freeimage { };
+  # ES and DraStic both need SDL2_classic (not sdl2-compat/SDL3) for KMSDRM
+  SDL2_classic_mixer = prev.SDL2_mixer.override { SDL2 = final.SDL2_classic; };
+  emulationstation-fcamod = final.callPackage ./pkgs/emulationstation-fcamod {
+    SDL2 = final.SDL2_classic;
+    SDL2_mixer = final.SDL2_classic_mixer;
+  };
+  es-theme-gbz35-mod = final.callPackage ./pkgs/es-theme-gbz35-mod { };
+  drastic = final.callPackage ./pkgs/drastic { SDL2 = final.SDL2_classic; };
 }

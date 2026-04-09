@@ -3,6 +3,7 @@
 
   imports = [
     ./retroarch
+    ./emulationstation
     ./hardware.nix
     ./diagnostics.nix
   ];
