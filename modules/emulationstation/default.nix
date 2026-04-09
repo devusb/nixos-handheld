@@ -8,13 +8,16 @@
 let
   cfg = config.handheld.emulationstation;
 
+  retroarchPkg = cfg.retroarchPackage.wrapper {
+    cores = cfg.retroarchCores;
+    settings = cfg.retroarchSettings;
+  };
+
   esSystemsCfg = import ./systems.nix {
     inherit pkgs;
     inherit retroarchPkg;
   };
   esInputCfg = cfg.inputConfigFile;
-
-  retroarchPkg = cfg.retroarchPackage;
 
   esSettingsCfg = pkgs.writeText "es_settings.cfg" ''
 
@@ -48,10 +51,42 @@ in
     };
     retroarchPackage = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.retroarch-handheld.override {
-        settings = import ../retroarch/settings.nix;
+      default = pkgs.retroarch-bare;
+      description = "Base RetroArch package (before wrapper). The module composes the final wrapper with cores and settings.";
+    };
+    retroarchCores = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = with pkgs.libretro; [
+        mgba
+        gambatte
+        beetle-ngp
+        snes9x
+        genesis-plus-gx
+        fceumm
+        pcsx-rearmed
+        fbneo
+        melonds
+        dosbox-pure
+        mupen64plus
+        parallel-n64
+        opera
+        mame2003-plus
+        scummvm
+        picodrive
+        ppsspp
+        flycast
+      ];
+      description = "List of libretro cores to include.";
+    };
+    retroarchSettings = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = import ../retroarch/settings.nix // {
+        # Volume handled by triggerhappy at the system level
+        input_volume_up = "nul";
+        input_volume_down = "nul";
+        audio_volume = "0.0";
       };
-      description = "RetroArch package used to launch cores.";
+      description = "RetroArch settings attrset for --appendconfig.";
     };
     user = lib.mkOption {
       type = lib.types.str;
