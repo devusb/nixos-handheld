@@ -12,6 +12,7 @@
   vlc,
   rapidjson,
   alsa-lib,
+  alsa-utils,
   mesa,
   libglvnd,
   libdrm,
@@ -70,6 +71,8 @@ stdenv.mkDerivation {
     substituteInPlace CMake/Packages/FindSDL2MIXER.cmake \
       --replace-fail '@sdl2MixerDev@' '${SDL2_mixer.dev}' \
       --replace-fail '@sdl2MixerLib@' '${SDL2_mixer}'
+    substituteInPlace es-app/src/guis/GuiMenu.cpp \
+      --replace-fail '@amixer@' '${lib.getExe' alsa-utils "amixer"}'
   '';
 
   installPhase = ''
