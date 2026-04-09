@@ -6,7 +6,8 @@ let
   # The retroarch-handheld wrapper is a symlinkJoin with all cores merged.
   # Cores live at $out/lib/retroarch/cores/<name>_libretro.so.
   # The wrapper already has --appendconfig baked in, so we just need -L <core>.
-  mkCommand = core:
+  mkCommand =
+    core:
     "${retroarchPkg}/bin/retroarch -L ${retroarchPkg}/lib/retroarch/cores/${core}_libretro.so %ROM%";
 
   systems = {

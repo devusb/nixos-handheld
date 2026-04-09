@@ -49,11 +49,18 @@
     enable = true;
     user = "root";
     bindings = [
-      { keys = ["VOLUMEUP"];   event = "press"; cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%+"; }
-      { keys = ["VOLUMEDOWN"]; event = "press"; cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%-"; }
+      {
+        keys = [ "VOLUMEUP" ];
+        event = "press";
+        cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%+";
+      }
+      {
+        keys = [ "VOLUMEDOWN" ];
+        event = "press";
+        cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%-";
+      }
     ];
   };
-
 
   powerManagement.cpuFreqGovernor = "ondemand";
 

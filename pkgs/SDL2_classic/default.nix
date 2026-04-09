@@ -25,7 +25,10 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-sXlW+ivDRCNMcZDzZEfOPGvFGU0aE4n/fO+Wxym6GGw=";
   };
 
-  outputs = [ "out" "dev" ];
+  outputs = [
+    "out"
+    "dev"
+  ];
   outputBin = "dev";
 
   patches = [ ./find-headers.patch ];
@@ -69,22 +72,24 @@ stdenv.mkDerivation (finalAttrs: {
     moveToOutput bin/sdl2-config "$dev"
   '';
 
-  postFixup = let
-    rpath = lib.makeLibraryPath [
-      alsa-lib
-      libdrm
-      libgbm
-      libglvnd
-      mesa
-      udev
-    ];
-  in ''
-    for lib in $out/lib/*.so* ; do
-      if ! [[ -L "$lib" ]]; then
-        patchelf --set-rpath "$(patchelf --print-rpath $lib):${rpath}" "$lib"
-      fi
-    done
-  '';
+  postFixup =
+    let
+      rpath = lib.makeLibraryPath [
+        alsa-lib
+        libdrm
+        libgbm
+        libglvnd
+        mesa
+        udev
+      ];
+    in
+    ''
+      for lib in $out/lib/*.so* ; do
+        if ! [[ -L "$lib" ]]; then
+          patchelf --set-rpath "$(patchelf --print-rpath $lib):${rpath}" "$lib"
+        fi
+      done
+    '';
 
   setupHook = ./setup-hook.sh;
 

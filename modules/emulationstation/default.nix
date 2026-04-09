@@ -8,7 +8,10 @@
 let
   cfg = config.handheld.emulationstation;
 
-  esSystemsCfg = import ./systems.nix { inherit pkgs; inherit retroarchPkg; };
+  esSystemsCfg = import ./systems.nix {
+    inherit pkgs;
+    inherit retroarchPkg;
+  };
   esInputCfg = import ./input.nix { inherit pkgs; };
 
   retroarchPkg = cfg.retroarchPackage;
@@ -94,37 +97,69 @@ in
         };
       };
       "/var/lib/drastic/game_database.xml" = {
-        "L+" = { argument = "${pkgs.drastic}/share/drastic/game_database.xml"; };
+        "L+" = {
+          argument = "${pkgs.drastic}/share/drastic/game_database.xml";
+        };
       };
       "/var/lib/drastic/usrcheat.dat" = {
-        "L+" = { argument = "${pkgs.drastic}/share/drastic/usrcheat.dat"; };
+        "L+" = {
+          argument = "${pkgs.drastic}/share/drastic/usrcheat.dat";
+        };
       };
       "/var/lib/drastic/drastic_logo_0.raw" = {
-        "L+" = { argument = "${pkgs.drastic}/share/drastic/drastic_logo_0.raw"; };
+        "L+" = {
+          argument = "${pkgs.drastic}/share/drastic/drastic_logo_0.raw";
+        };
       };
       "/var/lib/drastic/drastic_logo_1.raw" = {
-        "L+" = { argument = "${pkgs.drastic}/share/drastic/drastic_logo_1.raw"; };
+        "L+" = {
+          argument = "${pkgs.drastic}/share/drastic/drastic_logo_1.raw";
+        };
       };
       "/var/lib/drastic/system" = {
-        "L+" = { argument = "${pkgs.drastic}/share/drastic/system"; };
+        "L+" = {
+          argument = "${pkgs.drastic}/share/drastic/system";
+        };
       };
       "/var/lib/drastic/config" = {
-        d = { user = cfg.user; group = "users"; mode = "0755"; };
+        d = {
+          user = cfg.user;
+          group = "users";
+          mode = "0755";
+        };
       };
       "/var/lib/drastic/backup" = {
-        d = { user = cfg.user; group = "users"; mode = "0755"; };
+        d = {
+          user = cfg.user;
+          group = "users";
+          mode = "0755";
+        };
       };
       "/var/lib/drastic/cheats" = {
-        d = { user = cfg.user; group = "users"; mode = "0755"; };
+        d = {
+          user = cfg.user;
+          group = "users";
+          mode = "0755";
+        };
       };
       "/var/lib/drastic/savestates" = {
-        d = { user = cfg.user; group = "users"; mode = "0755"; };
+        d = {
+          user = cfg.user;
+          group = "users";
+          mode = "0755";
+        };
       };
       "/var/lib/drastic/profiles" = {
-        d = { user = cfg.user; group = "users"; mode = "0755"; };
+        d = {
+          user = cfg.user;
+          group = "users";
+          mode = "0755";
+        };
       };
       "/var/lib/drastic/config/drastic.cfg" = {
-        "L+" = { argument = "${pkgs.drastic}/share/drastic/config/drastic.cfg"; };
+        "L+" = {
+          argument = "${pkgs.drastic}/share/drastic/config/drastic.cfg";
+        };
       };
     };
 
@@ -171,13 +206,21 @@ in
     environment.variables.SDL_VIDEO_CURSOR_HIDDEN = "1";
 
     # Allow user to reboot/poweroff via ES menu
-    security.sudo.extraRules = [{
-      users = [ cfg.user ];
-      commands = [
-        { command = "${lib.getExe' pkgs.systemd "systemctl"} reboot"; options = [ "NOPASSWD" ]; }
-        { command = "${lib.getExe' pkgs.systemd "systemctl"} poweroff"; options = [ "NOPASSWD" ]; }
-      ];
-    }];
+    security.sudo.extraRules = [
+      {
+        users = [ cfg.user ];
+        commands = [
+          {
+            command = "${lib.getExe' pkgs.systemd "systemctl"} reboot";
+            options = [ "NOPASSWD" ];
+          }
+          {
+            command = "${lib.getExe' pkgs.systemd "systemctl"} poweroff";
+            options = [ "NOPASSWD" ];
+          }
+        ];
+      }
+    ];
 
     environment.systemPackages = [
       cfg.package
