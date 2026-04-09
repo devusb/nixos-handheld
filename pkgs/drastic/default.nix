@@ -53,8 +53,7 @@ stdenv.mkDerivation {
     # Wrapper: cd to state dir, symlink store data, run binary
     # State dir (/var/lib/drastic) is set up by the ES module via tmpfiles
     makeWrapper $out/share/drastic/drastic $out/bin/drastic \
-      --chdir /var/lib/drastic \
-      --set SDL_GAMECONTROLLERCONFIG "19003982010000008811000088010000,r36s_Gamepad,platform:Linux,a:b1,b:b0,dpdown:b14,dpleft:b15,+lefty:+a1,-leftx:-a0,+leftx:+a0,-lefty:-a1,leftshoulder:b4,leftstick:b11,lefttrigger:b6,dpright:b16,+righty:+a3,-rightx:-a2,+rightx:+a2,-righty:-a3,rightshoulder:b5,rightstick:b12,righttrigger:b7,back:b8,start:b9,dpup:b13,x:b2,y:b3,"
+      --chdir /var/lib/drastic
 
     runHook postInstall
   '';
