@@ -2,7 +2,7 @@
 
 ## What this is
 
-NixOS-based gaming OS for the Game Console R36H (RK3326 ARM handheld). Boots directly to RetroArch. No desktop environment, no compositor — RetroArch renders via DRM/KMS on the bare framebuffer.
+NixOS-based gaming OS for the Game Console R36H (RK3326 ARM handheld). Boots to EmulationStation as a game browser, which launches RetroArch cores and DraStic (NDS). No desktop environment, no compositor — everything renders via DRM/KMS on the bare framebuffer using SDL2's KMSDRM backend.
 
 ## Hardware
 
@@ -59,25 +59,33 @@ For long builds (kernel rebuilds), use `nix build` on the remote store first, th
 flake.nix             — nixosConfigurations.r36h, overlays.default, nixosModules.default, legacyPackages
 overlay.nix           — callPackage wiring for all custom packages
 modules/
-  default.nix         — self-applies overlay, imports all shared modules
+  default.nix         — self-applies overlay, imports all shared modules (retroarch + emulationstation)
   retroarch/
-    default.nix       — RetroArch systemd service, gamer user, quit=poweroff
+    default.nix       — RetroArch module (handheld.retroarch.enable, package, user options)
     settings.nix      — RetroArch --appendconfig settings (declarative, can't be overridden by user)
-  hardware.nix        — GPU, backlight udev, ALSA init, power management, performance governor
+  emulationstation/
+    default.nix       — ES module (handheld.emulationstation.enable, package, retroarchPackage, user options)
+    systems.nix       — System → emulator mapping (generates es_systems.cfg)
+    input.nix         — Joypad input config (es_input.cfg for r36s_Gamepad)
+  hardware.nix        — GPU, backlight udev, ALSA init, triggerhappy volume, power management
   diagnostics.nix     — writes /var/log/diagnostics.txt on every boot
 pkgs/
-  kernel-rk3326/      — mainline Linux 6.19 kernel config + DTS
-    default.nix       — linuxPackages_latest.kernel.override + overrideAttrs for DTS postPatch
-    rk3326-r36s.dts   — plain DTS file (copied into kernel source at build time)
-    patches/          — single Makefile patch to add DTS to build
+  linux-rk3326/       — mainline Linux 6.19 kernel config
+  rk3326-dtb/         — standalone DTS compilation (no kernel rebuild on DTS changes)
+    rk3326-r36s.dts   — plain DTS file for R36H/R36S
   rocknix-joypad/     — ROCKNIX singleadc-joypad out-of-tree kernel module
   panel-generic-dsi/  — ROCKNIX generic-dsi panel out-of-tree kernel module
+  SDL2_classic/       — native SDL2 2.32.6 for DRM/KMS console (not sdl2-compat/SDL3)
+  freeimage/          — image loading library for ES (removed from nixpkgs, includes CVE patches)
+  emulationstation-fcamod/ — ES frontend (fcamod fork, 351v branch, vendored patch)
+  drastic/            — DraStic NDS emulator (prebuilt aarch64 binary from ROCKNIX)
+  es-theme-gbz35-mod/ — GBZ35 Mod theme for EmulationStation
   retroarch/          — retroarch-bare override (no X11/Wayland/Pulse/Qt, ODROIDGO2 brightness patch)
     wrapper.nix       — retroarch-handheld wrapper (cores list + settings)
   retroarch-joypad-autoconfig/ — r36s_Gamepad button mapping
   alsa-utils/         — alsa-utils with pipewire disabled
   parallel-n64/       — aarch64 build fixes for parallel-n64
-  sdl3/               — SDL3 stripped of desktop dependencies (DRM/KMS console build)
+  sdl3/               — SDL3 stripped of desktop dependencies (closure size optimization)
 handhelds/
   r36h/               — device-specific: U-Boot blob, firmware, boot.ini, mounts
 socs/
@@ -91,7 +99,26 @@ socs/
 1. Armbian U-Boot (`u-boot-rockchip.bin` at raw sector 64) loads `boot.ini` from ext4 rootfs
 2. `boot.ini` loads kernel Image, initrd, and DTB from `/boot`, applies panel DTBO via `fdt apply`
 3. NixOS initrd mounts rootfs (ext4, label NIXOS_SD), hands off to stage-2 init
-4. systemd starts, RetroArch service launches
+4. systemd starts, EmulationStation service launches
+
+### EmulationStation
+
+ES-fcamod (351v branch) renders via SDL2_classic's KMSDRM backend with GLES1 (Panfrost). Key design decisions:
+
+- **SDL2_classic (not sdl2-compat/SDL3)**: nixpkgs SDL2 is now sdl2-compat backed by SDL3, which breaks both ES (creates desktop GL context instead of GLES) and DraStic (segfaults with corrupted surface stride). SDL2_classic is a hand-rolled SDL2 2.32.6 build for console DRM/KMS use.
+- **351v branch (not master)**: The master branch uses libgo2 for display (requires RGA kernel driver not on mainline). 351v has libgo2 code commented out and uses plain SDL2 KMSDRM.
+- **Vendored patch**: `pkgs/emulationstation-fcamod/nixos-handheld.patch` contains GCC 15 fixes, GLES context profile for Panfrost, go2 include removal, analog deadzone fix, cursor reinit fix, status bar fixes, timezone crash guard, and `@placeholder@` markers for Nix store path substitution.
+- **HideWindow=true**: Critical ES setting — tears down SDL/DRM before launching games so emulators get a clean DRM context.
+
+### DraStic (Nintendo DS)
+
+Prebuilt aarch64 binary from ROCKNIX. Uses SDL2_classic for KMSDRM rendering.
+
+**DRM fd closing**: ES holds DRM file descriptors for its SDL2 KMSDRM context. When ES `system()`-launches a game, `fork()` copies all fds. DraStic can't initialize its own DRM context with inherited fds. The launch command in `systems.nix` closes `/dev/dri/*` fds before exec.
+
+**Cursor fix**: DraStic enables the DRM hardware cursor plane for touch input. On exit, the cursor persisted in ES because `SDL_ShowCursor(0)` only ran on first init. Patched to run on every reinit.
+
+State directory at `/var/lib/drastic/` with symlinked store data and writable subdirs (config, backup, cheats, savestates, profiles).
 
 ### Generations / installBootLoader
 
@@ -103,7 +130,7 @@ The R36H ships with random LCD panels. Our DTB uses the ROCKNIX `panel-generic-d
 
 ### DTS approach
 
-The device tree is a plain `.dts` file at `pkgs/kernel-rk3326/rk3326-r36s.dts`, copied into the kernel source tree via `overrideAttrs postPatch`. A single Makefile patch adds it to the kernel build. This avoids fragile patch files with hunk counts.
+The device tree is compiled standalone via the `rk3326-dtb` package (runs cpp + dtc on the DTS using kernel source for includes). DTS changes rebuild in ~1s instead of ~5min kernel rebuild. The DTB is referenced via `hardware.deviceTree.dtbSource` in the handheld config.
 
 ### Joypad driver
 
@@ -116,13 +143,15 @@ The driver is an out-of-tree kernel module at `pkgs/rocknix-joypad/`, ported fro
 - Left stick axes inverted via `invert-absx`/`invert-absy` DTS properties
 - Miyoo serial code stripped (not needed for R36H)
 
+**Analog stick note**: The R36H's cheap ADC sticks have asymmetric physical range (~1200 left vs ~1530 right out of declared 1800). ES deadzone lowered to 12000 (from 23000) to ensure all directions register.
+
 Autoconfig: `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`. Device: vendor `1`, product `4488` (0x1188).
 
 ### Audio
 
 - Hardware mixer set to 80% (-19dB) at boot via `alsa-init` systemd service
 - Service depends on `sys-devices-platform-rk817\x2dsound-sound-card0-controlC0.device` (not just `sound.target`) because the codec module loads late
-- RetroArch volume buttons control software `audio_volume`, not the ALSA mixer
+- Volume buttons via triggerhappy (runs as root, uses `amixer -c 0` to target RK817 card explicitly)
 - Speaker is driven through the HP path — do NOT switch Playback Mux to SPK (kills audio)
 
 ### RetroArch configuration
@@ -143,7 +172,7 @@ Settings are defined in `modules/retroarch/settings.nix`. Key settings:
 
 RetroArch is built without X11, Wayland, PulseAudio, PipeWire, Qt (matching circuix-sword pattern). The build customization is in `pkgs/retroarch/default.nix`, wired through `overlay.nix`.
 
-The ODROIDGO2 brightness patch (`pkgs/retroarch/odroidgo2-features.patch`) unlocks brightness control and shutdown/reboot menu items without requiring HAVE_LAKKA. Note: shutdown/reboot menu items don't actually show in rgui (only in xmb/ozone). Quit RetroArch triggers `systemctl poweroff` via `ExecStopPost`.
+The ODROIDGO2 brightness patch (`pkgs/retroarch/odroidgo2-features.patch`) unlocks brightness control without requiring HAVE_LAKKA. The on-exit brightness reset is disabled (would slam to max when returning to ES).
 
 ### Debugging
 
@@ -191,16 +220,18 @@ Both fixes are in `overlay.nix`. N64 emulation is marginal on this hardware — 
 
 ### Closure size optimization
 
-Current: ~4.8GB uncompressed. Main bloat sources:
+Main bloat sources:
 - Mesa (1GB) + LLVM (586MB) — trimming Mesa to Panfrost-only would help but Mesa 26 meson options changed, needs more work
 - GTK3 (312MB) — pulled in by retroarch-bare directly, can't easily remove
+- VLC (~200MB) — pulled in by ES, could use `onlyLibVLC` override
 - linux-firmware (764MB)
 
 Applied optimizations:
 - SDL3 override: no pipewire, pulseaudio, wayland, x11, libdecor (kills GTK4/gstreamer chain)
+- SDL2_classic: console-only build (no X11/Wayland/PulseAudio/PipeWire)
 - alsa-utils: `withPipewireLib = false`
 - NixOS `profiles/minimal.nix`, disabled `all-hardware.nix` and `base.nix`
-- No NetworkManager, no SSH, no DHCP
+- No NetworkManager, no SSH (except debug), no DHCP
 
 ### USB status
 
@@ -215,7 +246,9 @@ Host mode broken (error -71). Gadget ethernet works (`g_ether` module, device at
 - Custom packages go in `pkgs/`, exposed via `overlay.nix`
 - Device-specific config only in `handhelds/r36h/`
 - Shared modules in `modules/`
+- Modules use `mkEnableOption` + `mkIf` pattern with `package` and `user` options
 - Long builds: `nix build` on remote store, then `nixos-rebuild` to deploy
 - Quick config changes: `nixos-rebuild switch` directly
 - Kernel/DTS changes: `nixos-rebuild boot` + reboot
 - Out-of-tree module changes don't require kernel rebuild
+- ES fork changes go in `devusb/EmulationStation-fcamod` nixos-handheld branch, vendored as a patch

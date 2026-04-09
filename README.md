@@ -2,6 +2,8 @@
 
 NixOS-based gaming OS for ARM handheld devices. Currently supports the **Game Console R36H** (RK3326).
 
+Boots to [EmulationStation](https://github.com/christianhaitian/EmulationStation-fcamod) (fcamod fork, 351v branch) as a game browser, launching RetroArch cores for most systems and DraStic for Nintendo DS. No desktop environment, no compositor — everything renders directly to the DRM framebuffer via SDL2's KMSDRM backend.
+
 ## Supported Hardware
 
 - **Game Console R36H** — Rockchip RK3326, Mali-G31 GPU, 1GB RAM, 640x480 display
@@ -16,8 +18,8 @@ NixOS-based gaming OS for ARM handheld devices. Currently supports the **Game Co
 |---|---|
 | `nixosConfigurations.r36h` | Full NixOS system configuration. Use with `nixos-rebuild boot/switch` to deploy to a running device over SSH. |
 | `packages.aarch64-linux.r36h-image` | Flashable SD card image (zstd compressed). For first install. |
-| `nixosModules.default` | Shared NixOS modules (retroarch, hardware, diagnostics). Reusable for other handhelds. |
-| `overlays.default` | Custom package overlay (kernel, retroarch, joypad driver, panel driver, etc). |
+| `nixosModules.default` | Shared NixOS modules (emulationstation, retroarch, hardware, diagnostics). Reusable for other handhelds. |
+| `overlays.default` | Custom package overlay (kernel, retroarch, emulationstation, joypad driver, panel driver, etc). |
 | `legacyPackages.aarch64-linux` | Full nixpkgs set with overlay applied. |
 
 ## Flashing
@@ -53,25 +55,50 @@ Create these directories on the roms card:
 - `/roms/states` — save states
 - `/roms/bios` — BIOS files (e.g., `scph1001.bin` for PSX)
 
+NDS games require DraStic BIOS files in `/roms/bios` (`drastic_bios_arm7.bin`, `drastic_bios_arm9.bin`).
+
+## Supported Systems
+
+GB, GBC, GBA, NES, SNES, Mega Drive/Genesis, Sega 32X, Neo Geo Pocket, PlayStation (with m3u multi-disc support), N64, Nintendo DS (DraStic), PSP, Arcade (FBNeo), Neo Geo, DOS, 3DO, MAME, ScummVM.
+
 ## Controls
 
-- **Start + Select** — open RetroArch quick menu
-- **Volume Up / Down** — adjust audio volume
+- **D-pad / Left stick** — navigate EmulationStation menus
+- **A** — select, **B** — back
+- **Start** — open ES main menu (system info, quit, shutdown)
+- **Start + Select** — open RetroArch quick menu (in-game)
+- **L3 (left stick click)** — DraStic menu (in NDS games)
+- **Volume Up / Down** — adjust audio volume (hardware buttons)
 - **Power button (short press)** — suspend
 - **Power button (long press)** — force power off
-- **Quit RetroArch** (from main menu) — clean shutdown
+
+## NixOS Module Options
+
+Both frontends are available as NixOS modules with `enable`, `package`, and `user` options:
+
+```nix
+# EmulationStation (game browser → launches RetroArch cores + DraStic)
+handheld.emulationstation.enable = true;
+
+# RetroArch kiosk mode (boots directly to RetroArch, quit = poweroff)
+handheld.retroarch.enable = true;
+```
+
+Only enable one at a time. Both default to user `gamer` (uid 1000, groups: input, video, audio).
 
 ## What Works
 
-- Display (640x480, Panfrost GL, brightness control)
-- RetroArch with rgui menu (direct DRM/KMS, no compositor)
+- EmulationStation game browser with GBZ35 Mod theme
+- RetroArch cores for 18 systems
+- DraStic standalone DS emulator with R36S button mapping
+- Display (640x480, Panfrost GLES, brightness control via sysfs)
 - Unified gamepad (buttons + dual analog sticks as single input device)
-- Audio (speaker + headphone, volume buttons)
+- Audio (speaker + headphone, hardware volume buttons via triggerhappy)
+- Battery level display in ES menu
 - USB gadget ethernet + SSH (for headless development)
 - NixOS generations (`nixos-rebuild boot/switch` over SSH)
 - Suspend / resume (power button)
-- Clean shutdown (quit RetroArch)
-- GBA, GB/GBC, SNES, Genesis/Game Gear/Master System, NES, PSX, Neo Geo Pocket Color, arcade (FBNeo), DOS, NDS (slow)
+- Shutdown / reboot from ES menu
 - Second SD card for ROMs (exFAT, automount)
 - Saves and states on roms card (survive reflash)
 
@@ -79,19 +106,20 @@ Create these directories on the roms card:
 
 - USB host (error -71, dwc2 issue)
 - WiFi (no hardware on most R36H units)
-- NDS at full speed (melonds ~15fps)
+- Brightness hotkeys (no button combo yet — adjust via ES Display Settings menu)
 
 ## Architecture
 
+- **Frontend**: EmulationStation-fcamod (351v branch) with SDL2_classic KMSDRM backend
+- **Emulators**: RetroArch (18 cores) + DraStic (NDS)
 - **Kernel**: Mainline Linux 6.19 via `linuxPackages_latest` + `structuredExtraConfig`
-- **GPU**: Panfrost (open-source Mali-G31 driver via Mesa), fixed at 480MHz
+- **GPU**: Panfrost (open-source Mali-G31 driver via Mesa)
 - **Display**: Out-of-tree ROCKNIX generic-dsi panel driver with NV3051D init sequence
 - **Input**: Out-of-tree ROCKNIX singleadc-joypad driver (ADC sticks + GPIO buttons as one device)
 - **Boot**: Armbian U-Boot → boot.ini → kernel + initrd + DTB from ext4 rootfs
 - **Generations**: Custom `installBootLoader` copies kernel/initrd/DTB to fixed paths
-- **DTS**: Plain `.dts` file copied into kernel source via `overrideAttrs postPatch`
-- **RetroArch**: Custom build (no X11/Wayland/Pulse/Qt), ODROIDGO2 brightness patch
-- **Audio**: Hardware mixer at 80%, RetroArch software volume control
+- **DTS**: Compiled standalone via `rk3326-dtb` package (no kernel rebuild on DTS changes)
+- **Audio**: Hardware mixer at 80%, volume buttons via triggerhappy, ES volume slider
 - **Image**: NixOS sd-image.nix with firmware partition and U-Boot blob injection
 
 ## References
@@ -103,7 +131,9 @@ Create these directories on the roms card:
 - [Jovian-NixOS](https://github.com/Jovian-Experiments/Jovian-NixOS) — Overlay + modules + legacyPackages pattern
 - [circuix-sword](https://github.com/jecaro/circuix-sword) — NixOS handheld gaming (RetroArch on DRM/KMS)
 - [dArkOS](https://github.com/christianhaitian/arkos) — Emulation stack and device support reference
+- [EmulationStation-fcamod](https://github.com/christianhaitian/EmulationStation-fcamod) — ES fork with fcamod features (351v branch)
 
 ## Documentation
 
 - [External dependencies](docs/external-dependencies.md) — vendored files, origins, and replacement paths
+- [EmulationStation implementation](docs/emulationstation-implementation.md) — design decisions, package details, and module architecture
