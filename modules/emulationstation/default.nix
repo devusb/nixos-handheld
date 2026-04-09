@@ -12,7 +12,7 @@ let
     inherit pkgs;
     inherit retroarchPkg;
   };
-  esInputCfg = import ./input.nix { inherit pkgs; };
+  esInputCfg = cfg.inputConfigFile;
 
   retroarchPkg = cfg.retroarchPackage;
 
@@ -37,6 +37,14 @@ in
       type = lib.types.package;
       default = pkgs.emulationstation-fcamod;
       description = "EmulationStation package to use.";
+    };
+    inputConfigFile = lib.mkOption {
+      type = lib.types.path;
+      description = "EmulationStation es_input.cfg file (gamepad button mappings).";
+    };
+    drastic.configFile = lib.mkOption {
+      type = lib.types.path;
+      description = "DraStic configuration file (button mappings and emulation settings).";
     };
     retroarchPackage = lib.mkOption {
       type = lib.types.package;
@@ -158,7 +166,7 @@ in
       };
       "/var/lib/drastic/config/drastic.cfg" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/config/drastic.cfg";
+          argument = "${cfg.drastic.configFile}";
         };
       };
     };
