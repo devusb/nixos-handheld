@@ -32,7 +32,4 @@
       "--enable-opengles"
       "--enable-opengles3"
     ];
-    patches = (old.patches or [ ]) ++ [
-      ./odroidgo2-features.patch
-    ];
   })
