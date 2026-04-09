@@ -12,7 +12,9 @@ final: prev: {
   };
 
   retroarch-bare = final.callPackage ./pkgs/retroarch { retroarch-bare = prev.retroarch-bare; };
-  retroarch-handheld = final.callPackage ./pkgs/retroarch/wrapper.nix { };
+  retroarch-bare-odroidgo2 = final.retroarch-bare.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ./pkgs/retroarch/odroidgo2-features.patch ];
+  });
 
   alsa-utils = final.callPackage ./pkgs/alsa-utils { alsa-utils = prev.alsa-utils; };
 
