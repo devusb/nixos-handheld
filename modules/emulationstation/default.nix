@@ -29,7 +29,7 @@ let
     <bool name="ScreenSaverControls" value="false" />
     <int name="MaxVRAM" value="80" />
     <bool name="HideWindow" value="true" />
-    <string name="ThemeSet" value="gbz35_mod" />
+    <string name="ThemeSet" value="${cfg.theme.name}" />
   '';
 
   esConfigDir = "/var/lib/emulationstation/.emulationstation";
@@ -49,6 +49,20 @@ in
     drastic.configFile = lib.mkOption {
       type = lib.types.path;
       description = "DraStic configuration file (button mappings and emulation settings).";
+    };
+    theme.package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.es-theme-gbz35-mod;
+      description = "EmulationStation theme package.";
+    };
+    theme.name = lib.mkOption {
+      type = lib.types.str;
+      default = cfg.theme.package.passthru.themeName;
+      defaultText = lib.literalExpression "cfg.theme.package.passthru.themeName";
+      description = ''
+        Theme set name. Defaults to the theme package's `passthru.themeName`;
+        override if bringing a theme package without one.
+      '';
     };
     retroarchPackage = lib.mkOption {
       type = lib.types.package;
@@ -112,7 +126,7 @@ in
 
     # ES reads es_input.cfg from /etc/emulationstation/ (hardcoded path)
     environment.etc."emulationstation/es_input.cfg".source = esInputCfg;
-    environment.etc."emulationstation/themes/gbz35_mod".source = pkgs.es-theme-gbz35-mod;
+    environment.etc."emulationstation/themes/${cfg.theme.name}".source = cfg.theme.package;
 
     # Declarative config in /var/lib/emulationstation/.emulationstation/
     # ES can write gamelists, scraped data, etc. alongside these
