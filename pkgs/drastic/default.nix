@@ -6,7 +6,6 @@
   SDL2,
   alsa-lib,
   zlib,
-  makeWrapper,
 }:
 
 stdenv.mkDerivation {
@@ -22,7 +21,6 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     autoPatchelfHook
-    makeWrapper
   ];
 
   buildInputs = [
@@ -37,23 +35,11 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin $out/share/drastic
-
-    # Binary
-    install -m755 drastic $out/share/drastic/drastic
-
-    # Data files DraStic expects next to the binary
+    mkdir -p $out/bin $out/share/drastic $out/share/drastic/system
+    install -m755 drastic $out/bin/drastic
     cp game_database.xml usrcheat.dat $out/share/drastic/
     cp drastic_logo_0.raw drastic_logo_1.raw $out/share/drastic/
-
-    # BIOS files
-    mkdir -p $out/share/drastic/system
     cp system/drastic_bios_arm7.bin system/drastic_bios_arm9.bin $out/share/drastic/system/
-
-    # Wrapper: cd to state dir, symlink store data, run binary
-    # State dir (/var/lib/drastic) is set up by the ES module via tmpfiles
-    makeWrapper $out/share/drastic/drastic $out/bin/drastic \
-      --chdir /var/lib/drastic
 
     runHook postInstall
   '';

@@ -48,7 +48,6 @@ in
     };
     settings = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = import ./settings.nix;
       description = "RetroArch settings attrset for --appendconfig.";
     };
     user = lib.mkOption {
@@ -58,39 +57,47 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    users.users.${cfg.user} = {
-      isNormalUser = true;
-      uid = 1000;
-      extraGroups = [
-        "input"
-        "video"
-        "audio"
-      ];
-    };
-
-    # RetroArch as systemd service — direct DRM/KMS, no compositor
-    systemd.services.retroarch = {
-      description = "RetroArch";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "systemd-user-sessions.service" ];
-      restartIfChanged = false;
-      preStart = "${lib.getExe' pkgs.coreutils "ln"} -sfn ${retroarchPkg}/lib/retroarch/cores /run/retroarch/cores";
-      serviceConfig = {
-        User = cfg.user;
-        Group = "users";
-        Restart = "on-abnormal";
-        RestartSec = "2";
-        RuntimeDirectory = "retroarch";
-        Environment = [
-          "XDG_RUNTIME_DIR=/run/retroarch"
-          "HOME=/home/${cfg.user}"
+  config = lib.mkMerge [
+    # Settings default is applied unconditionally so it can be read even
+    # when kiosk RA is disabled (e.g. for eval-time verification).
+    {
+      handheld.retroarch.settings = lib.mkDefault (
+        import ./settings.nix { inherit (config.handheld) romsDirectory; }
+      );
+    }
+    (lib.mkIf cfg.enable {
+      users.users.${cfg.user} = {
+        isNormalUser = true;
+        uid = 1000;
+        extraGroups = [
+          "input"
+          "video"
+          "audio"
         ];
-        ExecStart = "${lib.getExe retroarchPkg} --verbose";
-        ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
       };
-    };
 
-    environment.systemPackages = [ retroarchPkg ];
-  };
+      systemd.services.retroarch = {
+        description = "RetroArch";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "systemd-user-sessions.service" ];
+        restartIfChanged = false;
+        preStart = "${lib.getExe' pkgs.coreutils "ln"} -sfn ${retroarchPkg}/lib/retroarch/cores /run/retroarch/cores";
+        serviceConfig = {
+          User = cfg.user;
+          Group = "users";
+          Restart = "on-abnormal";
+          RestartSec = "2";
+          RuntimeDirectory = "retroarch";
+          Environment = [
+            "XDG_RUNTIME_DIR=/run/retroarch"
+            "HOME=/home/${cfg.user}"
+          ];
+          ExecStart = "${lib.getExe retroarchPkg} --verbose";
+          ExecStopPost = "+${lib.getExe' pkgs.systemd "systemctl"} poweroff";
+        };
+      };
+
+      environment.systemPackages = [ retroarchPkg ];
+    })
+  ];
 }

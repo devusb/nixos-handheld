@@ -8,15 +8,116 @@
 let
   cfg = config.handheld.emulationstation;
 
+  romsDir = config.handheld.romsDirectory;
+
+  systemType = lib.types.submodule (
+    { name, ... }:
+    {
+      options = {
+        fullname = lib.mkOption {
+          type = lib.types.str;
+          description = "Display name of the system (shown in ES).";
+        };
+        path = lib.mkOption {
+          type = lib.types.str;
+          default = "${romsDir}/${name}";
+          defaultText = lib.literalExpression ''"''${config.handheld.romsDirectory}/<system-name>"'';
+          description = "ROM directory for this system.";
+        };
+        extensions = lib.mkOption {
+          type = lib.types.str;
+          description = ''Space-separated extension list, e.g. ".gb .GB .zip".'';
+        };
+        platform = lib.mkOption {
+          type = lib.types.str;
+          default = name;
+          description = "Scraper platform tag.";
+        };
+        theme = lib.mkOption {
+          type = lib.types.str;
+          default = name;
+          description = "Theme entry name.";
+        };
+        command = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Full shell command for the system. If null, a default RetroArch
+            command is generated from retroarchCore. The command receives
+            %ROM% which ES substitutes at launch time.
+          '';
+        };
+        retroarchCore = lib.mkOption {
+          type = lib.types.nullOr lib.types.package;
+          default = null;
+          description = ''
+            libretro core package for this system, or null for non-RetroArch
+            systems (like nds via DraStic). When non-null, this core is
+            automatically included in the ES-composed RetroArch wrapper's
+            cores list.
+          '';
+        };
+      };
+    }
+  );
+
+  # nixpkgs libretro packages expose passthru.core (hyphen form); RetroArch
+  # expects the .so basename with underscores. e.g. libretro.beetle-ngp has
+  # passthru.core = "mednafen-ngp" → mednafen_ngp_libretro.so.
+  coreFilename =
+    pkg: (lib.replaceStrings [ "-" ] [ "_" ] pkg.passthru.core) + "_libretro.so";
+
+  mkRetroArchCommand =
+    core:
+    "${retroarchPkg}/bin/retroarch -L ${retroarchPkg}/lib/retroarch/cores/${coreFilename core} %ROM%";
+
+  defaultSystems = import ./systems.nix {
+    inherit lib pkgs;
+    drasticEnabled = cfg.drastic.enable;
+    drasticPackage = cfg.drastic.package;
+    drasticStateDirectory = cfg.drastic.stateDirectory;
+  };
+
+  activeSystems = lib.filterAttrs (_: v: v != null) cfg.systems;
+
+  derivedCores = lib.unique (
+    lib.filter (c: c != null) (
+      lib.mapAttrsToList (_: sys: sys.retroarchCore) activeSystems
+    )
+  );
+
   retroarchPkg = cfg.retroarchPackage.wrapper {
-    cores = cfg.retroarchCores;
+    cores = derivedCores;
     settings = cfg.retroarchSettings;
   };
 
-  esSystemsCfg = import ./systems.nix {
-    inherit pkgs;
-    inherit retroarchPkg;
-  };
+  renderCommand =
+    sys:
+    if sys.command != null then
+      sys.command
+    else if sys.retroarchCore != null then
+      mkRetroArchCommand sys.retroarchCore
+    else
+      throw "EmulationStation system has neither command nor retroarchCore set";
+
+  systemToXml = name: sys: ''
+        <system>
+          <name>${name}</name>
+          <fullname>${sys.fullname}</fullname>
+          <path>${sys.path}</path>
+          <extension>${sys.extensions}</extension>
+          <command>${renderCommand sys}</command>
+          <platform>${sys.platform}</platform>
+          <theme>${sys.theme}</theme>
+        </system>'';
+
+  esSystemsCfg = pkgs.writeText "es_systems.cfg" ''
+    <?xml version="1.0"?>
+    <systemList>
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList systemToXml activeSystems)}
+    </systemList>
+  '';
+
   esInputCfg = cfg.inputConfigFile;
 
   esSettingsCfg = pkgs.writeText "es_settings.cfg" ''
@@ -28,10 +129,9 @@ let
     <bool name="ScreenSaverControls" value="false" />
     <int name="MaxVRAM" value="80" />
     <bool name="HideWindow" value="true" />
-    <string name="ThemeSet" value="gbz35_mod" />
+    <string name="ThemeSet" value="${cfg.theme.name}" />
   '';
 
-  esConfigDir = "/var/lib/emulationstation/.emulationstation";
 in
 {
   options.handheld.emulationstation = {
@@ -45,47 +145,80 @@ in
       type = lib.types.path;
       description = "EmulationStation es_input.cfg file (gamepad button mappings).";
     };
+    drastic.enable = lib.mkEnableOption "DraStic Nintendo DS emulator support" // {
+      default = true;
+    };
+    drastic.package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.drastic;
+      description = "DraStic package.";
+    };
+    drastic.stateDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/drastic";
+      description = ''
+        DraStic working directory. Config, saves, savestates, cheats, and
+        profiles live here; symlinks to read-only data from the package
+        (game database, BIOS, logos) are also placed here.
+      '';
+    };
     drastic.configFile = lib.mkOption {
       type = lib.types.path;
       description = "DraStic configuration file (button mappings and emulation settings).";
+    };
+    configDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/emulationstation/.emulationstation";
+      description = ''
+        Directory where EmulationStation reads es_systems.cfg,
+        es_settings.cfg, es_input.cfg, gamelists, and scraped data.
+        Must be writable by handheld.emulationstation.user.
+      '';
+    };
+    theme.package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.es-theme-gbz35-mod;
+      description = "EmulationStation theme package.";
+    };
+    theme.name = lib.mkOption {
+      type = lib.types.str;
+      default = cfg.theme.package.passthru.themeName;
+      defaultText = lib.literalExpression "cfg.theme.package.passthru.themeName";
+      description = ''
+        Theme set name. Defaults to the theme package's `passthru.themeName`;
+        override if bringing a theme package without one.
+      '';
     };
     retroarchPackage = lib.mkOption {
       type = lib.types.package;
       default = pkgs.retroarch-bare;
       description = "Base RetroArch package (before wrapper). The module composes the final wrapper with cores and settings.";
     };
-    retroarchCores = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = with pkgs.libretro; [
-        mgba
-        gambatte
-        beetle-ngp
-        snes9x
-        genesis-plus-gx
-        fceumm
-        pcsx-rearmed
-        fbneo
-        melonds
-        dosbox-pure
-        mupen64plus
-        parallel-n64
-        opera
-        mame2003-plus
-        scummvm
-        picodrive
-        ppsspp
-        flycast
-      ];
-      description = "List of libretro cores to include.";
+    systems = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.nullOr systemType);
+      description = ''
+        EmulationStation systems, keyed by short name. Overrides the
+        defaults in modules/emulationstation/systems.nix entirely.
+        The RetroArch wrapper's cores list is derived from each
+        entry's retroarchCore.
+      '';
+      example = lib.literalExpression ''
+        {
+          snes = {
+            fullname = "Super Nintendo";
+            extensions = ".smc .sfc .SMC .SFC .zip .ZIP .7z";
+            retroarchCore = pkgs.libretro.snes9x;
+          };
+          dreamcast = {
+            fullname = "Sega Dreamcast";
+            extensions = ".chd .cdi .gdi";
+            retroarchCore = pkgs.libretro.flycast;
+          };
+        }
+      '';
     };
     retroarchSettings = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = import ../retroarch/settings.nix // {
-        # Volume handled by triggerhappy at the system level
-        input_volume_up = "nul";
-        input_volume_down = "nul";
-        audio_volume = "0.0";
-      };
       description = "RetroArch settings attrset for --appendconfig.";
     };
     user = lib.mkOption {
@@ -96,6 +229,17 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    handheld.emulationstation.systems = lib.mkDefault defaultSystems;
+
+    handheld.emulationstation.retroarchSettings = lib.mkDefault (
+      (import ../retroarch/settings.nix { inherit (config.handheld) romsDirectory; }) // {
+        # Volume handled by triggerhappy at the system level
+        input_volume_up = "nul";
+        input_volume_down = "nul";
+        audio_volume = "0.0";
+      }
+    );
+
     users.users.${cfg.user} = {
       isNormalUser = true;
       uid = 1000;
@@ -108,98 +252,101 @@ in
 
     # ES reads es_input.cfg from /etc/emulationstation/ (hardcoded path)
     environment.etc."emulationstation/es_input.cfg".source = esInputCfg;
-    environment.etc."emulationstation/themes/gbz35_mod".source = pkgs.es-theme-gbz35-mod;
+    environment.etc."emulationstation/themes/${cfg.theme.name}".source = cfg.theme.package;
 
     # Declarative config in /var/lib/emulationstation/.emulationstation/
     # ES can write gamelists, scraped data, etc. alongside these
     systemd.tmpfiles.settings."10-emulationstation" = {
-      "${esConfigDir}" = {
+      "${cfg.configDirectory}" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "${esConfigDir}/es_systems.cfg" = {
+      "${cfg.configDirectory}/es_systems.cfg" = {
         "L+" = {
           argument = "${esSystemsCfg}";
         };
       };
-      "${esConfigDir}/es_settings.cfg" = {
+      "${cfg.configDirectory}/es_settings.cfg" = {
         "L+" = {
           argument = "${esSettingsCfg}";
         };
       };
+    };
 
-      # DraStic state directory — writable by gamer, store data symlinked
-      "/var/lib/drastic" = {
+    # Read-only data from the package is symlinked into the writable state
+    # dir so DraStic finds it in cwd at runtime.
+    systemd.tmpfiles.settings."11-emulationstation-drastic" = lib.mkIf cfg.drastic.enable {
+      "${cfg.drastic.stateDirectory}" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/game_database.xml" = {
+      "${cfg.drastic.stateDirectory}/game_database.xml" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/game_database.xml";
+          argument = "${cfg.drastic.package}/share/drastic/game_database.xml";
         };
       };
-      "/var/lib/drastic/usrcheat.dat" = {
+      "${cfg.drastic.stateDirectory}/usrcheat.dat" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/usrcheat.dat";
+          argument = "${cfg.drastic.package}/share/drastic/usrcheat.dat";
         };
       };
-      "/var/lib/drastic/drastic_logo_0.raw" = {
+      "${cfg.drastic.stateDirectory}/drastic_logo_0.raw" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/drastic_logo_0.raw";
+          argument = "${cfg.drastic.package}/share/drastic/drastic_logo_0.raw";
         };
       };
-      "/var/lib/drastic/drastic_logo_1.raw" = {
+      "${cfg.drastic.stateDirectory}/drastic_logo_1.raw" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/drastic_logo_1.raw";
+          argument = "${cfg.drastic.package}/share/drastic/drastic_logo_1.raw";
         };
       };
-      "/var/lib/drastic/system" = {
+      "${cfg.drastic.stateDirectory}/system" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/system";
+          argument = "${cfg.drastic.package}/share/drastic/system";
         };
       };
-      "/var/lib/drastic/config" = {
+      "${cfg.drastic.stateDirectory}/config" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/backup" = {
+      "${cfg.drastic.stateDirectory}/backup" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/cheats" = {
+      "${cfg.drastic.stateDirectory}/cheats" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/savestates" = {
+      "${cfg.drastic.stateDirectory}/savestates" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/profiles" = {
+      "${cfg.drastic.stateDirectory}/profiles" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/config/drastic.cfg" = {
+      "${cfg.drastic.stateDirectory}/config/drastic.cfg" = {
         "L+" = {
           argument = "${cfg.drastic.configFile}";
         };

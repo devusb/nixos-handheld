@@ -5,8 +5,14 @@
   ...
 }:
 
+let
+  cfg = config.handheld.diagnostics;
+in
 {
-  systemd.services.hardware-diagnostics = {
+  options.handheld.diagnostics.enable = lib.mkEnableOption "boot-time hardware diagnostics dump to /var/log/diagnostics.txt";
+
+  config = lib.mkIf cfg.enable {
+    systemd.services.hardware-diagnostics = {
     description = "Dump hardware diagnostics";
     after = [ "multi-user.target" ];
     wantedBy = [ "multi-user.target" ];
@@ -78,6 +84,7 @@
 
         } > /var/log/diagnostics.txt 2>&1
       '';
+    };
     };
   };
 }

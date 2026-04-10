@@ -117,6 +117,8 @@
   handheld.emulationstation.inputConfigFile = ./es_input.cfg;
   handheld.emulationstation.drastic.configFile = ./drastic.cfg;
 
+  handheld.diagnostics.enable = true;
+
   console.enable = false;
   documentation.enable = false;
 
