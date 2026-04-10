@@ -64,9 +64,8 @@ modules/
     default.nix       — RetroArch module (handheld.retroarch.enable, package, user options)
     settings.nix      — RetroArch --appendconfig settings (declarative, can't be overridden by user)
   emulationstation/
-    default.nix       — ES module (handheld.emulationstation.enable, package, retroarchPackage, user options)
-    systems.nix       — System → emulator mapping (generates es_systems.cfg)
-    input.nix         — Joypad input config (es_input.cfg for r36s_Gamepad)
+    default.nix       — ES module (handheld.emulationstation.enable, package, retroarchPackage, systems, theme, drastic, ... options)
+    systems.nix       — Default systems attrset (gb, gbc, gba, ..., nds) consumed by the module's submodule-typed systems option
   hardware.nix        — GPU, backlight udev, ALSA init, triggerhappy volume, power management
   diagnostics.nix     — writes /var/log/diagnostics.txt on every boot
 pkgs/
@@ -81,7 +80,6 @@ pkgs/
   drastic/            — DraStic NDS emulator (prebuilt aarch64 binary from ROCKNIX)
   es-theme-gbz35-mod/ — GBZ35 Mod theme for EmulationStation
   retroarch/          — retroarch-bare override (no X11/Wayland/Pulse/Qt, ODROIDGO2 brightness patch)
-    wrapper.nix       — retroarch-handheld wrapper (cores list + settings)
   retroarch-joypad-autoconfig/ — r36s_Gamepad button mapping
   alsa-utils/         — alsa-utils with pipewire disabled
   parallel-n64/       — aarch64 build fixes for parallel-n64
@@ -236,6 +234,39 @@ Applied optimizations:
 ### USB status
 
 Host mode broken (error -71). Gadget ethernet works (`g_ether` module, device at `10.0.0.2`).
+
+### Reusable module options
+
+Modules in `modules/` are written so they can be consumed by a second in-tree
+handheld or a stranger's flake. Device-specific values are exposed as options;
+defaults preserve R36H behavior.
+
+- `handheld.romsDirectory` (default `/roms`) — ROM root. RetroArch derives
+  `bios`/`saves`/`states` subdirectories from this; ES systems use
+  `${romsDirectory}/<system>` as the default path. The module does not create
+  this directory — the consumer is responsible (R36H mounts `/roms` from the
+  second SD card via `fileSystems."/roms"`).
+- `handheld.emulationstation.theme.{package,name}` — theme package and the
+  matching theme directory name. Defaults to the bundled `gbz35_mod`.
+- `handheld.emulationstation.configDirectory` — where ES reads its XML configs
+  (default `/var/lib/emulationstation/.emulationstation`).
+- `handheld.emulationstation.drastic.{enable,package,stateDirectory,configFile}` —
+  DraStic NDS emulator wiring. `enable` defaults to true; disable on x86_64 or
+  when not wanted. When disabled, the `nds` system is removed from the default
+  systems attrset and the `/var/lib/drastic` tmpfiles rules are not applied.
+- `handheld.emulationstation.systems` — attrset of systems keyed by short name,
+  each a submodule with `fullname`, `path`, `extensions`, `platform`, `theme`,
+  `command`, and `retroarchCore`. When `command` is null and `retroarchCore`
+  is set, the module generates a default RetroArch command. The ES-composed
+  RetroArch wrapper's cores list is *derived* from the non-null `retroarchCore`
+  fields of active systems — there is no separate `retroarchCores` option, so
+  the two lists cannot drift. Remove a default system with `systems.foo = lib.mkForce null`.
+- `handheld.diagnostics.enable` (default false) — boot-time hardware
+  diagnostics dump to `/var/log/diagnostics.txt`. R36H enables it.
+
+The libretro `.so` filename is derived from the package via `passthru.core`:
+`lib.replaceStrings ["-"] ["_"] pkg.passthru.core + "_libretro.so"`. Example:
+`libretro.beetle-ngp.passthru.core = "mednafen-ngp"` → `mednafen_ngp_libretro.so`.
 
 ### Conventions
 
