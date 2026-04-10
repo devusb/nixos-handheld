@@ -39,9 +39,6 @@ stdenv.mkDerivation {
     install -m755 drastic $out/bin/drastic
     cp game_database.xml usrcheat.dat $out/share/drastic/
     cp drastic_logo_0.raw drastic_logo_1.raw $out/share/drastic/
-
-    # BIOS files
-    mkdir -p $out/share/drastic/system
     cp system/drastic_bios_arm7.bin system/drastic_bios_arm9.bin $out/share/drastic/system/
 
     runHook postInstall
