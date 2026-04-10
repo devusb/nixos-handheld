@@ -32,7 +32,6 @@ let
     <string name="ThemeSet" value="${cfg.theme.name}" />
   '';
 
-  esConfigDir = "/var/lib/emulationstation/.emulationstation";
 in
 {
   options.handheld.emulationstation = {
@@ -49,6 +48,15 @@ in
     drastic.configFile = lib.mkOption {
       type = lib.types.path;
       description = "DraStic configuration file (button mappings and emulation settings).";
+    };
+    configDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/emulationstation/.emulationstation";
+      description = ''
+        Directory where EmulationStation reads es_systems.cfg,
+        es_settings.cfg, es_input.cfg, gamelists, and scraped data.
+        Must be writable by handheld.emulationstation.user.
+      '';
     };
     theme.package = lib.mkOption {
       type = lib.types.package;
@@ -131,19 +139,19 @@ in
     # Declarative config in /var/lib/emulationstation/.emulationstation/
     # ES can write gamelists, scraped data, etc. alongside these
     systemd.tmpfiles.settings."10-emulationstation" = {
-      "${esConfigDir}" = {
+      "${cfg.configDirectory}" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "${esConfigDir}/es_systems.cfg" = {
+      "${cfg.configDirectory}/es_systems.cfg" = {
         "L+" = {
           argument = "${esSystemsCfg}";
         };
       };
-      "${esConfigDir}/es_settings.cfg" = {
+      "${cfg.configDirectory}/es_settings.cfg" = {
         "L+" = {
           argument = "${esSettingsCfg}";
         };
