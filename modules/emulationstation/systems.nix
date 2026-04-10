@@ -64,6 +64,11 @@ let
       extensions = ".n64 .z64 .v64 .N64 .Z64 .V64 .zip .ZIP .7z";
       retroarchCore = libretro.mupen64plus;
     };
+    dreamcast = {
+      fullname = "Sega Dreamcast";
+      extensions = ".chd .cdi .gdi .CHD .CDI .GDI .zip .ZIP .7z";
+      retroarchCore = libretro.flycast;
+    };
     psp = {
       fullname = "PlayStation Portable";
       extensions = ".iso .cso .pbp .ISO .CSO .PBP";
