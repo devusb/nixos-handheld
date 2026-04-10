@@ -50,16 +50,13 @@ Once connected, you can deploy changes with `nixos-rebuild switch/boot` targetin
 
 Put ROMs on a separate SD card (exFAT formatted, single partition) in the R36H's second card slot. They mount at `/roms`.
 
+The mount path is configurable via `handheld.romsDirectory` (default `/roms`); RetroArch derives its `bios`/`saves`/`states` subdirectories from it.
+
 Create these directories on the roms card:
 - `/roms/saves` — save files
 - `/roms/states` — save states
 - `/roms/bios` — BIOS files (e.g., `scph1001.bin` for PSX)
 
-NDS games require DraStic BIOS files in `/roms/bios` (`drastic_bios_arm7.bin`, `drastic_bios_arm9.bin`).
-
-## Supported Systems
-
-GB, GBC, GBA, NES, SNES, Mega Drive/Genesis, Sega 32X, Neo Geo Pocket, PlayStation (with m3u multi-disc support), N64, Nintendo DS (DraStic), PSP, Arcade (FBNeo), Neo Geo, DOS, 3DO, MAME, ScummVM.
 
 ## Controls
 
@@ -86,10 +83,12 @@ handheld.retroarch.enable = true;
 
 Only enable one at a time. Both default to user `gamer` (uid 1000, groups: input, video, audio).
 
+Device-specific values (ROM root, ES theme, ES config directory, DraStic state dir, systems list, diagnostics) are exposed as options so the modules are reusable for other handhelds. See `CLAUDE.md` § "Reusable module options" for the full set.
+
 ## What Works
 
 - EmulationStation game browser with GBZ35 Mod theme
-- RetroArch cores for 18 systems
+- RetroArch across + DraStic for NDS
 - DraStic standalone DS emulator with R36S button mapping
 - Display (640x480, Panfrost GLES, brightness control via sysfs)
 - Unified gamepad (buttons + dual analog sticks as single input device)
@@ -111,7 +110,7 @@ Only enable one at a time. Both default to user `gamer` (uid 1000, groups: input
 ## Architecture
 
 - **Frontend**: EmulationStation-fcamod (351v branch) with SDL2_classic KMSDRM backend
-- **Emulators**: RetroArch (18 cores) + DraStic (NDS)
+- **Emulators**: RetroArch + DraStic (NDS)
 - **Kernel**: Mainline Linux 6.19 via `linuxPackages_latest` + `structuredExtraConfig`
 - **GPU**: Panfrost (open-source Mali-G31 driver via Mesa)
 - **Display**: Out-of-tree ROCKNIX generic-dsi panel driver with NV3051D init sequence
