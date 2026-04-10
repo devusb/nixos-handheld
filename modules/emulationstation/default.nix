@@ -64,8 +64,7 @@ let
   # nixpkgs libretro packages expose passthru.core (hyphen form); RetroArch
   # expects the .so basename with underscores. e.g. libretro.beetle-ngp has
   # passthru.core = "mednafen-ngp" → mednafen_ngp_libretro.so.
-  coreFilename =
-    pkg: (lib.replaceStrings [ "-" ] [ "_" ] pkg.passthru.core) + "_libretro.so";
+  coreFilename = pkg: (lib.replaceStrings [ "-" ] [ "_" ] pkg.passthru.core) + "_libretro.so";
 
   mkRetroArchCommand =
     core:
@@ -81,9 +80,7 @@ let
   activeSystems = lib.filterAttrs (_: v: v != null) cfg.systems;
 
   derivedCores = lib.unique (
-    lib.filter (c: c != null) (
-      lib.mapAttrsToList (_: sys: sys.retroarchCore) activeSystems
-    )
+    lib.filter (c: c != null) (lib.mapAttrsToList (_: sys: sys.retroarchCore) activeSystems)
   );
 
   retroarchPkg = cfg.retroarchPackage.wrapper {
@@ -101,15 +98,15 @@ let
       throw "EmulationStation system has neither command nor retroarchCore set";
 
   systemToXml = name: sys: ''
-        <system>
-          <name>${name}</name>
-          <fullname>${sys.fullname}</fullname>
-          <path>${sys.path}</path>
-          <extension>${sys.extensions}</extension>
-          <command>${renderCommand sys}</command>
-          <platform>${sys.platform}</platform>
-          <theme>${sys.theme}</theme>
-        </system>'';
+    <system>
+      <name>${name}</name>
+      <fullname>${sys.fullname}</fullname>
+      <path>${sys.path}</path>
+      <extension>${sys.extensions}</extension>
+      <command>${renderCommand sys}</command>
+      <platform>${sys.platform}</platform>
+      <theme>${sys.theme}</theme>
+    </system>'';
 
   esSystemsCfg = pkgs.writeText "es_systems.cfg" ''
     <?xml version="1.0"?>
@@ -232,7 +229,8 @@ in
     handheld.emulationstation.systems = lib.mkDefault defaultSystems;
 
     handheld.emulationstation.retroarchSettings = lib.mkDefault (
-      (import ../retroarch/settings.nix { inherit (config.handheld) romsDirectory; }) // {
+      (import ../retroarch/settings.nix { inherit (config.handheld) romsDirectory; })
+      // {
         # Volume handled by triggerhappy at the system level
         input_volume_up = "nul";
         input_volume_down = "nul";
