@@ -119,6 +119,28 @@
 
   handheld.diagnostics.enable = true;
 
+  # Set hardware volume on boot — RetroArch/DraStic control volume in
+  # software on top of this baseline. The After= dep is R36H-specific
+  # (names the RK817 codec device path), so this service lives here
+  # rather than in modules/hardware.nix.
+  systemd.services.alsa-init = {
+    description = "Set default ALSA volume";
+    after = [
+      "sound.target"
+      "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device"
+    ];
+    requires = [ "sys-devices-platform-rk817\\x2dsound-sound-card0-controlC0.device" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ pkgs.alsa-utils ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "alsa-init" ''
+        amixer -c 0 sset 'Master' 80% 2>/dev/null || true
+      '';
+    };
+  };
+
   console.enable = false;
   documentation.enable = false;
 

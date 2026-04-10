@@ -66,7 +66,7 @@ modules/
   emulationstation/
     default.nix       — ES module (handheld.emulationstation.enable, package, retroarchPackage, systems, theme, drastic, ... options)
     systems.nix       — Default systems attrset (gb, gbc, gba, ..., nds) consumed by the module's submodule-typed systems option
-  hardware.nix        — GPU, backlight udev, ALSA init, triggerhappy volume, power management
+  hardware.nix        — GPU, backlight udev, power management, flash-friendly defaults
   diagnostics.nix     — writes /var/log/diagnostics.txt on every boot
 pkgs/
   linux-rk3326/       — mainline Linux 6.19 kernel config
@@ -147,10 +147,10 @@ Autoconfig: `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`.
 
 ### Audio
 
-- Hardware mixer set to 80% (-19dB) at boot via `alsa-init` systemd service
-- Service depends on `sys-devices-platform-rk817\x2dsound-sound-card0-controlC0.device` (not just `sound.target`) because the codec module loads late
-- Volume buttons via triggerhappy (runs as root, uses `amixer -c 0` to target RK817 card explicitly)
-- Speaker is driven through the HP path — do NOT switch Playback Mux to SPK (kills audio)
+- Hardware mixer set to 80% (-19dB) at boot via the `alsa-init` systemd service in `handhelds/r36h/default.nix`. Lives in the device-specific config because the `After=` dep names the RK817 codec device path and the card/control values are R36H-specific. RetroArch and DraStic then do software volume on top of this baseline.
+- Service depends on `sys-devices-platform-rk817\x2dsound-sound-card0-controlC0.device` (not just `sound.target`) because the codec module loads late.
+- Volume buttons via triggerhappy in the ES module (runs as root, uses `amixer -c 0` to target RK817 card explicitly). RetroArch also binds `VOLUMEUP`/`VOLUMEDOWN` internally via its input settings, so in-game both the triggerhappy handler and RetroArch see the events.
+- Speaker is driven through the HP path — do NOT switch Playback Mux to SPK (kills audio).
 
 ### RetroArch configuration
 
