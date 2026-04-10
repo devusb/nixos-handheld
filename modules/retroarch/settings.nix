@@ -1,3 +1,5 @@
+{ romsDirectory }:
+
 {
   menu_driver = "rgui";
   rgui_aspect_ratio_lock = "2";
@@ -7,7 +9,7 @@
   input_joypad_driver = "udev";
   savestate_auto_load = "true";
   savestate_auto_save = "true";
-  rgui_browser_directory = "/roms";
+  rgui_browser_directory = romsDirectory;
 
   # Hide menu items
   content_show_contentless_cores = "0";
@@ -55,9 +57,9 @@
   input_volume_down = "volumedown";
 
   # Paths — on roms card so they survive reflash
-  system_directory = "/roms/bios";
-  savefile_directory = "/roms/saves";
-  savestate_directory = "/roms/states";
+  system_directory = "${romsDirectory}/bios";
+  savefile_directory = "${romsDirectory}/saves";
+  savestate_directory = "${romsDirectory}/states";
 
   # Pin to stable symlink so retroarch.cfg can't cache a stale nix store path
   libretro_directory = "/run/retroarch/cores";

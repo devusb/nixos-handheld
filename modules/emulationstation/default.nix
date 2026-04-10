@@ -16,6 +16,7 @@ let
   esSystemsCfg = import ./systems.nix {
     inherit pkgs;
     inherit retroarchPkg;
+    inherit (config.handheld) romsDirectory;
   };
   esInputCfg = cfg.inputConfigFile;
 
@@ -80,12 +81,6 @@ in
     };
     retroarchSettings = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
-      default = import ../retroarch/settings.nix // {
-        # Volume handled by triggerhappy at the system level
-        input_volume_up = "nul";
-        input_volume_down = "nul";
-        audio_volume = "0.0";
-      };
       description = "RetroArch settings attrset for --appendconfig.";
     };
     user = lib.mkOption {
@@ -96,6 +91,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    handheld.emulationstation.retroarchSettings = lib.mkDefault (
+      (import ../retroarch/settings.nix { inherit (config.handheld) romsDirectory; }) // {
+        # Volume handled by triggerhappy at the system level
+        input_volume_up = "nul";
+        input_volume_down = "nul";
+        audio_volume = "0.0";
+      }
+    );
+
     users.users.${cfg.user} = {
       isNormalUser = true;
       uid = 1000;

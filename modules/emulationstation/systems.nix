@@ -1,5 +1,5 @@
 # System → RetroArch core mapping for es_systems.cfg
-{ pkgs, retroarchPkg }:
+{ pkgs, retroarchPkg, romsDirectory }:
 
 let
 
@@ -126,7 +126,7 @@ let
     <system>
       <name>${name}</name>
       <fullname>${sys.fullname}</fullname>
-      <path>/roms/${name}</path>
+      <path>${romsDirectory}/${name}</path>
       <extension>${sys.extensions}</extension>
       <command>${sys.command or (mkCommand sys.core)}</command>
       <platform>${sys.platform}</platform>
