@@ -17,6 +17,9 @@ let
     inherit pkgs;
     inherit retroarchPkg;
     inherit (config.handheld) romsDirectory;
+    drasticEnabled = cfg.drastic.enable;
+    drasticPackage = cfg.drastic.package;
+    drasticStateDirectory = cfg.drastic.stateDirectory;
   };
   esInputCfg = cfg.inputConfigFile;
 
@@ -44,6 +47,23 @@ in
     inputConfigFile = lib.mkOption {
       type = lib.types.path;
       description = "EmulationStation es_input.cfg file (gamepad button mappings).";
+    };
+    drastic.enable = lib.mkEnableOption "DraStic Nintendo DS emulator support" // {
+      default = true;
+    };
+    drastic.package = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.drastic;
+      description = "DraStic package.";
+    };
+    drastic.stateDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/drastic";
+      description = ''
+        DraStic working directory. Config, saves, savestates, cheats, and
+        profiles live here; symlinks to read-only data from the package
+        (game database, BIOS, logos) are also placed here.
+      '';
     };
     drastic.configFile = lib.mkOption {
       type = lib.types.path;
@@ -156,76 +176,79 @@ in
           argument = "${esSettingsCfg}";
         };
       };
+    };
 
-      # DraStic state directory — writable by gamer, store data symlinked
-      "/var/lib/drastic" = {
+    # Read-only data from the package is symlinked into the writable state
+    # dir so DraStic finds it in cwd at runtime.
+    systemd.tmpfiles.settings."11-emulationstation-drastic" = lib.mkIf cfg.drastic.enable {
+      "${cfg.drastic.stateDirectory}" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/game_database.xml" = {
+      "${cfg.drastic.stateDirectory}/game_database.xml" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/game_database.xml";
+          argument = "${cfg.drastic.package}/share/drastic/game_database.xml";
         };
       };
-      "/var/lib/drastic/usrcheat.dat" = {
+      "${cfg.drastic.stateDirectory}/usrcheat.dat" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/usrcheat.dat";
+          argument = "${cfg.drastic.package}/share/drastic/usrcheat.dat";
         };
       };
-      "/var/lib/drastic/drastic_logo_0.raw" = {
+      "${cfg.drastic.stateDirectory}/drastic_logo_0.raw" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/drastic_logo_0.raw";
+          argument = "${cfg.drastic.package}/share/drastic/drastic_logo_0.raw";
         };
       };
-      "/var/lib/drastic/drastic_logo_1.raw" = {
+      "${cfg.drastic.stateDirectory}/drastic_logo_1.raw" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/drastic_logo_1.raw";
+          argument = "${cfg.drastic.package}/share/drastic/drastic_logo_1.raw";
         };
       };
-      "/var/lib/drastic/system" = {
+      "${cfg.drastic.stateDirectory}/system" = {
         "L+" = {
-          argument = "${pkgs.drastic}/share/drastic/system";
+          argument = "${cfg.drastic.package}/share/drastic/system";
         };
       };
-      "/var/lib/drastic/config" = {
+      "${cfg.drastic.stateDirectory}/config" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/backup" = {
+      "${cfg.drastic.stateDirectory}/backup" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/cheats" = {
+      "${cfg.drastic.stateDirectory}/cheats" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/savestates" = {
+      "${cfg.drastic.stateDirectory}/savestates" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/profiles" = {
+      "${cfg.drastic.stateDirectory}/profiles" = {
         d = {
           user = cfg.user;
           group = "users";
           mode = "0755";
         };
       };
-      "/var/lib/drastic/config/drastic.cfg" = {
+      "${cfg.drastic.stateDirectory}/config/drastic.cfg" = {
         "L+" = {
           argument = "${cfg.drastic.configFile}";
         };

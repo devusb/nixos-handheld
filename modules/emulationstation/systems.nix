@@ -1,5 +1,5 @@
 # System → RetroArch core mapping for es_systems.cfg
-{ pkgs, retroarchPkg, romsDirectory }:
+{ pkgs, retroarchPkg, romsDirectory, drasticEnabled, drasticPackage, drasticStateDirectory }:
 
 let
 
@@ -74,7 +74,7 @@ let
     nds = {
       fullname = "Nintendo DS";
       extensions = ".nds .NDS .zip .ZIP .7z";
-      command = "for fd in /proc/self/fd/*; do case $(readlink $fd) in /dev/dri/*) eval \"exec $(basename $fd)>&-\";; esac; done; exec ${pkgs.drastic}/bin/drastic %ROM%";
+      command = ''for fd in /proc/self/fd/*; do case $(readlink $fd) in /dev/dri/*) eval "exec $(basename $fd)>&-";; esac; done; cd ${drasticStateDirectory} && exec ${drasticPackage}/bin/drastic %ROM%'';
       platform = "nds";
     };
     psp = {
@@ -122,6 +122,9 @@ let
     };
   };
 
+  effectiveSystems =
+    if drasticEnabled then systems else (builtins.removeAttrs systems [ "nds" ]);
+
   systemToXml = name: sys: ''
     <system>
       <name>${name}</name>
@@ -134,7 +137,7 @@ let
     </system>'';
 
   systemsXml = builtins.concatStringsSep "\n" (
-    builtins.attrValues (builtins.mapAttrs systemToXml systems)
+    builtins.attrValues (builtins.mapAttrs systemToXml effectiveSystems)
   );
 in
 pkgs.writeText "es_systems.cfg" ''
