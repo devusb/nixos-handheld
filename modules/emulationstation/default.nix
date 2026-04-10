@@ -8,19 +8,116 @@
 let
   cfg = config.handheld.emulationstation;
 
-  retroarchPkg = cfg.retroarchPackage.wrapper {
-    cores = cfg.retroarchCores;
-    settings = cfg.retroarchSettings;
-  };
+  romsDir = config.handheld.romsDirectory;
 
-  esSystemsCfg = import ./systems.nix {
-    inherit pkgs;
-    inherit retroarchPkg;
-    inherit (config.handheld) romsDirectory;
+  systemType = lib.types.submodule (
+    { name, ... }:
+    {
+      options = {
+        fullname = lib.mkOption {
+          type = lib.types.str;
+          description = "Display name of the system (shown in ES).";
+        };
+        path = lib.mkOption {
+          type = lib.types.str;
+          default = "${romsDir}/${name}";
+          defaultText = lib.literalExpression ''"''${config.handheld.romsDirectory}/<system-name>"'';
+          description = "ROM directory for this system.";
+        };
+        extensions = lib.mkOption {
+          type = lib.types.str;
+          description = ''Space-separated extension list, e.g. ".gb .GB .zip".'';
+        };
+        platform = lib.mkOption {
+          type = lib.types.str;
+          default = name;
+          description = "Scraper platform tag.";
+        };
+        theme = lib.mkOption {
+          type = lib.types.str;
+          default = name;
+          description = "Theme entry name.";
+        };
+        command = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Full shell command for the system. If null, a default RetroArch
+            command is generated from retroarchCore. The command receives
+            %ROM% which ES substitutes at launch time.
+          '';
+        };
+        retroarchCore = lib.mkOption {
+          type = lib.types.nullOr lib.types.package;
+          default = null;
+          description = ''
+            libretro core package for this system, or null for non-RetroArch
+            systems (like nds via DraStic). When non-null, this core is
+            automatically included in the ES-composed RetroArch wrapper's
+            cores list.
+          '';
+        };
+      };
+    }
+  );
+
+  # nixpkgs libretro packages expose passthru.core (hyphen form); RetroArch
+  # expects the .so basename with underscores. e.g. libretro.beetle-ngp has
+  # passthru.core = "mednafen-ngp" → mednafen_ngp_libretro.so.
+  coreFilename =
+    pkg: (lib.replaceStrings [ "-" ] [ "_" ] pkg.passthru.core) + "_libretro.so";
+
+  mkRetroArchCommand =
+    core:
+    "${retroarchPkg}/bin/retroarch -L ${retroarchPkg}/lib/retroarch/cores/${coreFilename core} %ROM%";
+
+  defaultSystems = import ./systems.nix {
+    inherit lib pkgs;
     drasticEnabled = cfg.drastic.enable;
     drasticPackage = cfg.drastic.package;
     drasticStateDirectory = cfg.drastic.stateDirectory;
   };
+
+  activeSystems = lib.filterAttrs (_: v: v != null) cfg.systems;
+
+  derivedCores = lib.unique (
+    lib.filter (c: c != null) (
+      lib.mapAttrsToList (_: sys: sys.retroarchCore) activeSystems
+    )
+  );
+
+  retroarchPkg = cfg.retroarchPackage.wrapper {
+    cores = derivedCores;
+    settings = cfg.retroarchSettings;
+  };
+
+  renderCommand =
+    sys:
+    if sys.command != null then
+      sys.command
+    else if sys.retroarchCore != null then
+      mkRetroArchCommand sys.retroarchCore
+    else
+      throw "EmulationStation system has neither command nor retroarchCore set";
+
+  systemToXml = name: sys: ''
+        <system>
+          <name>${name}</name>
+          <fullname>${sys.fullname}</fullname>
+          <path>${sys.path}</path>
+          <extension>${sys.extensions}</extension>
+          <command>${renderCommand sys}</command>
+          <platform>${sys.platform}</platform>
+          <theme>${sys.theme}</theme>
+        </system>'';
+
+  esSystemsCfg = pkgs.writeText "es_systems.cfg" ''
+    <?xml version="1.0"?>
+    <systemList>
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList systemToXml activeSystems)}
+    </systemList>
+  '';
+
   esInputCfg = cfg.inputConfigFile;
 
   esSettingsCfg = pkgs.writeText "es_settings.cfg" ''
@@ -97,29 +194,28 @@ in
       default = pkgs.retroarch-bare;
       description = "Base RetroArch package (before wrapper). The module composes the final wrapper with cores and settings.";
     };
-    retroarchCores = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = with pkgs.libretro; [
-        mgba
-        gambatte
-        beetle-ngp
-        snes9x
-        genesis-plus-gx
-        fceumm
-        pcsx-rearmed
-        fbneo
-        melonds
-        dosbox-pure
-        mupen64plus
-        parallel-n64
-        opera
-        mame2003-plus
-        scummvm
-        picodrive
-        ppsspp
-        flycast
-      ];
-      description = "List of libretro cores to include.";
+    systems = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.nullOr systemType);
+      description = ''
+        EmulationStation systems, keyed by short name. Overrides the
+        defaults in modules/emulationstation/systems.nix entirely.
+        The RetroArch wrapper's cores list is derived from each
+        entry's retroarchCore.
+      '';
+      example = lib.literalExpression ''
+        {
+          snes = {
+            fullname = "Super Nintendo";
+            extensions = ".smc .sfc .SMC .SFC .zip .ZIP .7z";
+            retroarchCore = pkgs.libretro.snes9x;
+          };
+          dreamcast = {
+            fullname = "Sega Dreamcast";
+            extensions = ".chd .cdi .gdi";
+            retroarchCore = pkgs.libretro.flycast;
+          };
+        }
+      '';
     };
     retroarchSettings = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
@@ -133,6 +229,8 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    handheld.emulationstation.systems = lib.mkDefault defaultSystems;
+
     handheld.emulationstation.retroarchSettings = lib.mkDefault (
       (import ../retroarch/settings.nix { inherit (config.handheld) romsDirectory; }) // {
         # Volume handled by triggerhappy at the system level
