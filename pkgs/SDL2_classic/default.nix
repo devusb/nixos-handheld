@@ -15,7 +15,7 @@
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  pname = "SDL2-native";
+  pname = "SDL2";
   version = "2.32.6";
 
   src = fetchFromGitHub {
@@ -53,7 +53,6 @@ stdenv.mkDerivation (finalAttrs: {
     "--without-x"
     "--disable-video-wayland"
     "--disable-video-x11"
-    "--disable-video-opengl"
     "--disable-pulseaudio"
     "--disable-pipewire"
     "--disable-jack"
@@ -68,7 +67,6 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   postInstall = ''
-    rm $out/lib/*.a
     moveToOutput bin/sdl2-config "$dev"
   '';
 
