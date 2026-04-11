@@ -115,6 +115,13 @@ let
       extensions = ".scummvm";
       retroarchCore = libretro.scummvm;
     };
+    ports = {
+      fullname = "Ports";
+      extensions = ".sh .SH";
+      platform = "pc";
+      theme = "ports";
+      command = mkKmsDrmCommand "exec ${pkgs.lib.getExe pkgs.bash} %ROM%";
+    };
   };
 
   ndsEntry = {
