@@ -13,6 +13,14 @@
 let
   libretro = pkgs.libretro;
 
+  # Close DRM fds inherited from ES so the child can open its own KMSDRM context.
+  mkKmsDrmCommand = cmd: ''
+    for fd in /proc/self/fd/*; do
+      case $(readlink $fd) in /dev/dri/*) eval "exec $(basename $fd)>&-";; esac
+    done
+    ${cmd}
+  '';
+
   base = {
     gb = {
       fullname = "Game Boy";
@@ -107,16 +115,21 @@ let
       extensions = ".scummvm";
       retroarchCore = libretro.scummvm;
     };
+    ports = {
+      fullname = "Ports";
+      extensions = ".sh .SH";
+      platform = "pc";
+      theme = "ports";
+      command = mkKmsDrmCommand "exec ${pkgs.lib.getExe pkgs.bash} %ROM%";
+    };
   };
 
   ndsEntry = {
     nds = {
       fullname = "Nintendo DS";
       extensions = ".nds .NDS .zip .ZIP .7z";
-      # DraStic reads all state from cwd (no CLI flag to override), so we cd
-      # before exec. The `for fd` prelude closes inherited DRM fds — ES holds
-      # them open and DraStic can't initialize its own DRM context otherwise.
-      command = ''for fd in /proc/self/fd/*; do case $(readlink $fd) in /dev/dri/*) eval "exec $(basename $fd)>&-";; esac; done; cd ${drasticStateDirectory} && exec ${drasticPackage}/bin/drastic %ROM%'';
+      # DraStic reads all state from cwd (no CLI flag to override), so we cd before exec.
+      command = mkKmsDrmCommand "cd ${drasticStateDirectory} && exec ${drasticPackage}/bin/drastic %ROM%";
     };
   };
 in

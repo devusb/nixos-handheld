@@ -28,6 +28,6 @@
 
   # Minimize SD card writes
   boot.tmp.useTmpfs = true;
-  # services.journald.extraConfig = "Storage=volatile"; # disabled for debugging
+  services.journald.extraConfig = "Storage=volatile"; # disabled for debugging
   boot.kernel.sysctl."vm.swappiness" = 0;
 }

@@ -46,4 +46,9 @@ final: prev: {
   };
   es-theme-gbz35-mod = final.callPackage ./pkgs/es-theme-gbz35-mod { };
   drastic = final.callPackage ./pkgs/drastic { SDL2 = final.SDL2_classic; };
+
+  balatro = final.callPackage ./pkgs/balatro {
+    love = prev.love;
+    balatro = prev.balatro;
+  };
 }
