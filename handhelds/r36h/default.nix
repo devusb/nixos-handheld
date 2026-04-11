@@ -117,9 +117,6 @@
   handheld.emulationstation.inputConfigFile = ./es_input.cfg;
   handheld.emulationstation.drastic.configFile = ./drastic.cfg;
 
-  # Ports launchable from ES need their binaries on the service's PATH.
-  systemd.services.emulationstation.path = [ pkgs.balatro ];
-
   # SDL gamecontroller mapping for the R36H's r36s_Gamepad, inherited by every
   # child process ES launches.
   systemd.services.emulationstation.environment.SDL_GAMECONTROLLERCONFIG =
