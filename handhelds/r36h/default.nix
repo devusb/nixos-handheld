@@ -117,6 +117,21 @@
   handheld.emulationstation.inputConfigFile = ./es_input.cfg;
   handheld.emulationstation.drastic.configFile = ./drastic.cfg;
 
+  # Ports launchable from ES need their binaries on the service's PATH.
+  systemd.services.emulationstation.path = [ pkgs.balatro ];
+
+  # SDL gamecontroller mapping for the R36H's r36s_Gamepad, inherited by every
+  # child process ES launches.
+  systemd.services.emulationstation.environment.SDL_GAMECONTROLLERCONFIG =
+    "19003982010000008811000088010000,r36s_Gamepad,platform:Linux,"
+    + "a:b1,b:b0,x:b2,y:b3,"
+    + "back:b8,start:b9,"
+    + "leftshoulder:b4,rightshoulder:b5,lefttrigger:b6,righttrigger:b7,"
+    + "leftstick:b11,rightstick:b12,"
+    + "dpup:b13,dpdown:b14,dpleft:b15,dpright:b16,"
+    + "+leftx:+a0,-leftx:-a0,+lefty:+a1,-lefty:-a1,"
+    + "+rightx:+a2,-rightx:-a2,+righty:+a3,-righty:-a3,";
+
   handheld.diagnostics.enable = true;
 
   console.enable = false;
