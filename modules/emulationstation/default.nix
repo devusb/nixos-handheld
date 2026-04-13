@@ -418,12 +418,12 @@ in
         {
           keys = [ "VOLUMEUP" ];
           event = "press";
-          cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%+";
+          cmd = "${lib.getExe' pkgs.wireplumber "wpctl"} set-volume @DEFAULT_AUDIO_SINK@ 5%+";
         }
         {
           keys = [ "VOLUMEDOWN" ];
           event = "press";
-          cmd = "${lib.getExe' pkgs.alsa-utils "amixer"} -c 0 sset Master 5%-";
+          cmd = "${lib.getExe' pkgs.wireplumber "wpctl"} set-volume @DEFAULT_AUDIO_SINK@ 5%-";
         }
       ];
     };
