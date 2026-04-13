@@ -358,6 +358,12 @@ in
       after = [
         "systemd-user-sessions.service"
         "systemd-tmpfiles-setup.service"
+        "pipewire.service"
+        "wireplumber.service"
+      ];
+      requires = [
+        "pipewire.service"
+        "wireplumber.service"
       ];
       serviceConfig = {
         User = cfg.user;
