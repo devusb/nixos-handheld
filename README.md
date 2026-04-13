@@ -33,7 +33,7 @@ zstdcat result/sd-image/*.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=f
 
 ## Connecting via USB
 
-The device runs a USB gadget ethernet interface. Connect a USB cable to the device's USB-C port and configure your host:
+The device boots in USB gadget (peripheral) mode with a USB ethernet interface. Connect a USB cable to the device's USB-C port and configure your host:
 
 ```bash
 # On your host machine, set up the USB network interface
@@ -45,6 +45,8 @@ ssh root@10.0.0.2   # default password: nixos
 ```
 
 Once connected, you can deploy changes with `nixos-rebuild switch/boot` targeting `root@10.0.0.2`.
+
+The USB port supports OTG role switching — it can be toggled to host mode at runtime for USB peripherals (e.g., Bluetooth audio transmitters). See `CLAUDE.md` § "USB OTG" for details.
 
 ## ROMs
 
@@ -92,9 +94,10 @@ Device-specific values (ROM root, ES theme, ES config directory, DraStic state d
 - DraStic standalone DS emulator with R36S button mapping
 - Display (640x480, Panfrost GLES, brightness control via sysfs)
 - Unified gamepad (buttons + dual analog sticks as single input device)
-- Audio (speaker + headphone, hardware volume buttons via triggerhappy)
+- Audio (PipeWire, auto-switches between speaker and USB audio devices, volume buttons via wpctl)
 - Battery level display in ES menu
-- USB gadget ethernet + SSH (for headless development)
+- USB OTG role switching (gadget ethernet for SSH, host mode for USB peripherals)
+- USB audio (plug in a BT transmitter dongle, audio auto-routes via PipeWire)
 - NixOS generations (`nixos-rebuild boot/switch` over SSH)
 - Suspend / resume (power button)
 - Shutdown / reboot from ES menu
@@ -103,7 +106,6 @@ Device-specific values (ROM root, ES theme, ES config directory, DraStic state d
 
 ## What Doesn't Work
 
-- USB host (error -71, dwc2 issue)
 - WiFi (no hardware on most R36H units)
 - Brightness hotkeys (no button combo yet — adjust via ES Display Settings menu)
 
@@ -118,7 +120,7 @@ Device-specific values (ROM root, ES theme, ES config directory, DraStic state d
 - **Boot**: Armbian U-Boot → boot.ini → kernel + initrd + DTB from ext4 rootfs
 - **Generations**: Custom `installBootLoader` copies kernel/initrd/DTB to fixed paths
 - **DTS**: Compiled standalone via `rk3326-dtb` package (no kernel rebuild on DTS changes)
-- **Audio**: Hardware mixer at 80%, volume buttons via triggerhappy, ES volume slider
+- **Audio**: PipeWire (system-wide), auto-switches USB audio devices, volume via wpctl + triggerhappy
 - **Image**: NixOS sd-image.nix with firmware partition and U-Boot blob injection
 
 ## References

@@ -13,7 +13,7 @@ NixOS-based gaming OS for the Game Console R36H (RK3326 ARM handheld). Boots to 
 - **Storage**: Two microSD slots — slot 1 is NixOS boot, slot 2 is ROMs (exFAT)
 - **Input**: ROCKNIX singleadc-joypad (`r36s_Gamepad`, unified buttons + analog sticks), volume buttons (`gpio-keys-vol`)
 - **Audio**: RK817 codec, speaker + headphone jack (speaker driven through HP path)
-- **USB**: dwc2 OTG controller — gadget ethernet works, host mode broken (error -71)
+- **USB**: dwc2 OTG controller — OTG role switching via `usb-role-switch` (default: gadget/peripheral). Host mode works for USB audio dongles (Creative BT-W5 tested)
 - **WiFi**: RTL8723BS chip — unpopulated on this specific unit (no WiFi)
 - **Power**: RK817 charger, power button mapped to suspend via logind
 
@@ -66,7 +66,7 @@ modules/
   emulationstation/
     default.nix       — ES module (handheld.emulationstation.enable, package, retroarchPackage, systems, theme, drastic, ... options)
     systems.nix       — Default systems attrset (gb, gbc, gba, ..., nds) consumed by the module's submodule-typed systems option
-  hardware.nix        — GPU, backlight udev, ALSA init, triggerhappy volume, power management
+  hardware.nix        — GPU, backlight udev, PipeWire (system-wide), USB role switch udev, power management
   diagnostics.nix     — writes /var/log/diagnostics.txt on every boot
 pkgs/
   linux-rk3326/       — mainline Linux 6.19 kernel config
@@ -147,10 +147,28 @@ Autoconfig: `pkgs/retroarch-joypad-autoconfig/autoconfig/udev/r36s_Gamepad.cfg`.
 
 ### Audio
 
-- Hardware mixer set to 80% (-19dB) at boot via `alsa-init` systemd service
-- Service depends on `sys-devices-platform-rk817\x2dsound-sound-card0-controlC0.device` (not just `sound.target`) because the codec module loads late
-- Volume buttons via triggerhappy (runs as root, uses `amixer -c 0` to target RK817 card explicitly)
+- **PipeWire** manages audio routing — runs system-wide (`services.pipewire.systemWide = true`) to avoid user session race conditions. The `gamer` user is in the `pipewire` group.
+- PipeWire auto-switches between built-in speaker (RK817 codec) and USB audio devices when plugged/unplugged.
+- RetroArch, ES, and DraStic all use ALSA, which PipeWire intercepts via `pipewire-alsa`. No app-level config changes needed.
+- Volume buttons via triggerhappy (runs as root, uses `wpctl set-volume @DEFAULT_AUDIO_SINK@` to target the active PipeWire sink)
+- ES service requires PipeWire/WirePlumber — without this, ES starts before the ALSA sink is initialized and the volume overlay doesn't work.
 - Speaker is driven through the HP path — do NOT switch Playback Mux to SPK (kills audio)
+- **NixOS module bug**: `wireplumber.extraConfig` does not wire configs into the system service's `XDG_DATA_DIRS` when `systemWide = true`. Use `wireplumber.configPackages` with `pkgs.writeTextDir` instead.
+
+### USB OTG
+
+The dwc2 controller supports OTG role switching at runtime via the kernel's `usb-role-switch` class. The DTS sets `dr_mode = "otg"` with `role-switch-default-mode = "peripheral"` so the device boots in gadget mode (SSH works).
+
+**Runtime switching** via sysfs:
+```bash
+# Switch to host (for USB peripherals)
+echo "host" > /sys/class/udc/ff300000.usb/device/usb_role/ff300000.usb-role-switch/role
+
+# Switch to gadget (for SSH via USB ethernet)
+echo "device" > /sys/class/udc/ff300000.usb/device/usb_role/ff300000.usb-role-switch/role
+```
+
+A udev rule (`RUN+=chmod/chgrp`, not `MODE`/`GROUP` — sysfs attributes need explicit chmod) makes the role switch sysfs writable by the `users` group so scripts launched from ES (as `gamer`) can toggle it. The port can only be one role at a time — host mode means no SSH, gadget mode means no USB peripherals.
 
 ### RetroArch configuration
 
@@ -158,7 +176,7 @@ RetroArch settings are applied via `--appendconfig` (the `retroarch-bare.wrapper
 
 Settings are defined in `modules/retroarch/settings.nix`. Key settings:
 
-- `audio_driver = "alsa"` — direct ALSA, no PulseAudio/PipeWire
+- `audio_driver = "alsa"` — ALSA, routed through PipeWire via pipewire-alsa
 - `input_driver = "udev"` — reads from /dev/input directly
 - `menu_driver = "rgui"` — lightest menu driver
 - `menu_timedate_enable = "false"` — no RTC, clock is always wrong
@@ -206,7 +224,7 @@ Second SD card slot (roms): `mmcblk1p1`, exFAT, mounts at `/roms` via systemd au
 
 ### Kernel
 
-Mainline Linux 6.19 via `linuxPackages_latest` with `structuredExtraConfig` for RK3326-specific modules (SARADC, GPIO, DRM, Panfrost, I2S, USB gadget). Out-of-tree modules for panel driver and joypad driver, exposed via `overlay.nix` as `pkgs.panel-generic-dsi` and `pkgs.rocknix-joypad`.
+Mainline Linux 6.19 via `linuxPackages_latest` with `structuredExtraConfig` for RK3326-specific modules (SARADC, GPIO, DRM, Panfrost, I2S, USB gadget, USB audio, Bluetooth). Out-of-tree modules for panel driver and joypad driver, exposed via `overlay.nix` as `pkgs.panel-generic-dsi` and `pkgs.rocknix-joypad`.
 
 ### parallel-n64 on aarch64
 
@@ -230,10 +248,11 @@ Applied optimizations:
 - alsa-utils: `withPipewireLib = false`
 - NixOS `profiles/minimal.nix`, disabled `all-hardware.nix` and `base.nix`
 - No NetworkManager, no SSH (except debug), no DHCP
+- `nix.registry = lib.mkForce {}` — prevents nixpkgs source (~300MB) from being copied to the device
 
 ### USB status
 
-Host mode broken (error -71). Gadget ethernet works (`g_ether` module, device at `10.0.0.2`).
+OTG role switching works. Boots in gadget/peripheral mode (`g_ether` module, device at `10.0.0.2`). Host mode works — USB audio dongles enumerate and are picked up by PipeWire automatically. The error -71 that was previously seen with host mode was resolved by switching from `dr_mode = "peripheral"` to `dr_mode = "otg"` with `usb-role-switch` in the DTS.
 
 ### Reusable module options
 
