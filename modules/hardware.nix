@@ -36,6 +36,8 @@
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
+  nix.registry = lib.mkForce {};
+
   # Minimize SD card writes
   boot.tmp.useTmpfs = true;
   services.journald.extraConfig = "Storage=volatile"; # disabled for debugging
