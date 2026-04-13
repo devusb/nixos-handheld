@@ -13,6 +13,8 @@
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
     ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness"
+    SUBSYSTEM=="usb_role", RUN+="${pkgs.coreutils}/bin/chmod 0664 /sys%p/role"
+    SUBSYSTEM=="usb_role", RUN+="${pkgs.coreutils}/bin/chgrp users /sys%p/role"
   '';
 
   # Power button = suspend

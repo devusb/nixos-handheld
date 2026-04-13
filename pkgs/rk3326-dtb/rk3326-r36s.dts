@@ -794,7 +794,9 @@
 };
 
 &usb20_otg {
-	dr_mode = "peripheral";
+	dr_mode = "otg";
+	usb-role-switch;
+	role-switch-default-mode = "peripheral";
 	status = "okay";
 };
 
