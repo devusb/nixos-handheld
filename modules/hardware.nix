@@ -36,7 +36,7 @@
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
-  nix.registry = lib.mkForce {};
+  nix.registry = lib.mkForce { };
 
   # Minimize SD card writes
   boot.tmp.useTmpfs = true;
