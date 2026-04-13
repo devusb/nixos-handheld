@@ -24,7 +24,15 @@
     alsa-utils
   ];
 
-  hardware.alsa.enablePersistence = true;
+  # PipeWire — handles automatic audio device switching
+  # systemWide: runs as system service, not user service — avoids session race conditions
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    systemWide = true;
+  };
+
+  users.users.${config.handheld.emulationstation.user}.extraGroups = [ "pipewire" ];
 
   powerManagement.cpuFreqGovernor = "ondemand";
 
