@@ -2,6 +2,8 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  writeShellScript,
+  gawk,
   cmake,
   pkg-config,
   freeimage,
@@ -12,12 +14,18 @@
   vlc,
   rapidjson,
   alsa-lib,
-  alsa-utils,
+  wireplumber,
   mesa,
   libglvnd,
   libdrm,
 }:
 
+let
+  wpctl = lib.getExe' wireplumber "wpctl";
+  volumeScript = writeShellScript "es-get-volume" ''
+    ${wpctl} get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | ${lib.getExe gawk} '{printf "%.0f\n", $2 * 100}' || echo "?"
+  '';
+in
 stdenv.mkDerivation {
   pname = "emulationstation-fcamod";
   version = "0-unstable-2026-04-07";
@@ -71,8 +79,14 @@ stdenv.mkDerivation {
     substituteInPlace CMake/Packages/FindSDL2MIXER.cmake \
       --replace-fail '@sdl2MixerDev@' '${SDL2_mixer.dev}' \
       --replace-fail '@sdl2MixerLib@' '${SDL2_mixer}'
+    # Status bar commands — see es-app/src/guis/GuiMenu.cpp for usage:
+    #   @batteryCommand@ → bare integer, "%" appended by C++ (e.g. "85")
+    #   @volumeCommand@  → bare integer, "%" appended by C++ (e.g. "80")
+    #   @wifiCommand@    → short status string (e.g. "up", "down", "N/A")
     substituteInPlace es-app/src/guis/GuiMenu.cpp \
-      --replace-fail '@amixer@' '${lib.getExe' alsa-utils "amixer"}'
+      --replace-fail '@batteryCommand@' 'cat /sys/class/power_supply/rk817-battery/capacity 2>/dev/null || echo "?"' \
+      --replace-fail '@volumeCommand@' '${volumeScript}' \
+      --replace-fail '@wifiCommand@' 'echo N/A'
   '';
 
   installPhase = ''
