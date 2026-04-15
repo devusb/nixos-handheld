@@ -80,6 +80,21 @@ in
     # lists efivarfs in availableKernelModules. Skip it instead of failing the closure.
     boot.initrd.allowMissingModules = true;
 
+    # Upstream expand-root-partition.service derives the partition number from
+    # the minor number, which is probe-order-dependent on MMC (a second card
+    # inserted at boot can push the boot card's minors past 32, so partN != minor).
+    # Replace the script to use lsblk PARTN, which reads the real partition-table
+    # index. See https://github.com/NixOS/nixpkgs/pull/390183.
+    systemd.services.expand-root-partition.script = lib.mkForce ''
+      rootPart=$(${lib.getExe' pkgs.util-linux "findmnt"} -n -o SOURCE /)
+      bootDevice=$(${lib.getExe' pkgs.util-linux "lsblk"} -npo PKNAME $rootPart)
+      partNum=$(${lib.getExe' pkgs.util-linux "lsblk"} -no PARTN $rootPart)
+
+      echo ",+," | ${lib.getExe' pkgs.util-linux "sfdisk"} -N$partNum --no-reread $bootDevice
+      ${lib.getExe' pkgs.parted "partprobe"}
+      ${lib.getExe' pkgs.e2fsprogs "resize2fs"} $rootPart
+    '';
+
     # Custom boot loader — copies kernel/initrd/DTB to fixed paths in /boot
     boot.loader.grub.enable = false;
     boot.loader.generic-extlinux-compatible.enable = false;
