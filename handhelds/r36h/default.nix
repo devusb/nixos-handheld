@@ -129,8 +129,6 @@
     + "+leftx:+a0,-leftx:-a0,+lefty:+a1,-lefty:-a1,"
     + "+rightx:+a2,-rightx:-a2,+righty:+a3,-righty:-a3,";
 
-  handheld.diagnostics.enable = true;
-
   console.enable = false;
   documentation.enable = false;
 
