@@ -76,6 +76,10 @@ in
       "vfat"
     ];
 
+    # No EFI on RK3326 (CONFIG_EFI is not set), but systemd-initrd unconditionally
+    # lists efivarfs in availableKernelModules. Skip it instead of failing the closure.
+    boot.initrd.allowMissingModules = true;
+
     # Custom boot loader — copies kernel/initrd/DTB to fixed paths in /boot
     boot.loader.grub.enable = false;
     boot.loader.generic-extlinux-compatible.enable = false;
