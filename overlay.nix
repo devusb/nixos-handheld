@@ -52,4 +52,12 @@ final: prev: {
     love = prev.love;
     balatro = prev.balatro;
   };
+
+  spaghettikart = final.callPackage ./pkgs/spaghettikart {
+    spaghettikart = prev.spaghettikart;
+  };
+
+  spaghettikart-portmaster = final.callPackage ./pkgs/spaghettikart-portmaster { };
+
+  portmaster-fhs = final.callPackage ./pkgs/portmaster-fhs { };
 }

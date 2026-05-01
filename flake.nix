@@ -34,7 +34,7 @@
         modules = [
           { nixpkgs.config.allowUnfree = true; }
           ./handhelds/r36h
-          { systemd.services.emulationstation.path = [ pkgs.balatro ]; }
+          { systemd.services.emulationstation.path = [ pkgs.balatro pkgs.portmaster-fhs ]; environment.systemPackages = [ pkgs.portmaster-fhs ]; }
         ];
       };
 
