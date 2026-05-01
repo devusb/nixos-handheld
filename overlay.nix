@@ -52,4 +52,10 @@ final: prev: {
     love = prev.love;
     balatro = prev.balatro;
   };
+
+  libmali = final.callPackage ./pkgs/libmali { };
+
+  mali-kbase = final.callPackage ./pkgs/mali-kbase {
+    kernel = final.linux-rk3326;
+  };
 }
