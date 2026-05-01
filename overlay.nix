@@ -58,4 +58,8 @@ final: prev: {
   mali-kbase = final.callPackage ./pkgs/mali-kbase {
     kernel = final.linux-rk3326;
   };
+
+  portmaster-fhs = final.callPackage ./pkgs/portmaster-fhs { };
+
+  portmaster-launch = final.callPackage ./pkgs/portmaster-launch { };
 }
