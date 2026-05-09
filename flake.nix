@@ -32,9 +32,11 @@
       nixosConfigurations.r36h = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          { nixpkgs.config.allowUnfree = true; }
           ./handhelds/r36h
-          { systemd.services.emulationstation.path = [ pkgs.balatro ]; }
+          {
+            nixpkgs.config.allowUnfree = true;
+            systemd.services.emulationstation.path = [ pkgs.balatro ];
+          }
         ];
       };
 

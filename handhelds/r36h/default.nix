@@ -132,6 +132,12 @@
   console.enable = false;
   documentation.enable = false;
 
+  # Use the proprietary mali blob for better libultraship/PortMaster perf.
+  # Switch to "panfrost" for the open-source driver if needed — note that
+  # PortMaster prebuilts won't work on panfrost (they require libmali +
+  # /dev/mali0 from mali_kbase).
+  handheld.gpu.driver = "mali";
+
   # Debug tools
   environment.systemPackages = with pkgs; [
     htop

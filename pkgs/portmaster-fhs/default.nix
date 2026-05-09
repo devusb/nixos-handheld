@@ -1,6 +1,6 @@
 {
   buildFHSEnv,
-  SDL2_classic,
+  SDL2,
   SDL2_net,
   mesa,
   libglvnd,
@@ -23,7 +23,7 @@
 buildFHSEnv {
   name = "portmaster-run";
   targetPkgs = _: [
-    SDL2_classic
+    SDL2
     SDL2_net
     mesa
     libglvnd

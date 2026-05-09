@@ -4,10 +4,16 @@
   ffmpeg_7,
   qt6,
   wrapGAppsHook3,
+  libGL ? null,
+  libGLU ? null,
+  libgbm ? null,
 }:
-(retroarch-bare.override {
-  withWayland = false;
-}).overrideAttrs
+(retroarch-bare.override (
+  { withWayland = false; }
+  // lib.optionalAttrs (libGL != null) { inherit libGL; }
+  // lib.optionalAttrs (libGLU != null) { inherit libGLU; }
+  // lib.optionalAttrs (libgbm != null) { inherit libgbm; }
+)).overrideAttrs
   (old: {
     buildInputs = lib.lists.subtractLists [
       ffmpeg_7
