@@ -3,7 +3,7 @@
 {
   menu_driver = "rgui";
   rgui_aspect_ratio_lock = "2";
-  audio_driver = "alsa";
+  audio_driver = "pipewire";
   audio_latency = "64";
   input_driver = "udev";
   input_joypad_driver = "udev";
