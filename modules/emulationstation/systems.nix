@@ -35,7 +35,7 @@ let
     gba = {
       fullname = "Game Boy Advance";
       extensions = ".gba .GBA .zip .ZIP .7z";
-      retroarchCore = libretro.mgba;
+      retroarchCore = libretro.gpsp;
     };
     nes = {
       fullname = "Nintendo Entertainment System";
