@@ -60,7 +60,6 @@
   ];
 
   boot.kernelModules = [
-    "panfrost"
     "g_ether"
     "rockchip_saradc"
     "rocknix_singleadc_joypad"
@@ -117,6 +116,8 @@
   handheld.emulationstation.inputConfigFile = ./es_input.cfg;
   handheld.emulationstation.drastic.configFile = ./drastic.cfg;
 
+  handheld.portmaster.enable = true;
+
   # SDL gamecontroller mapping for the R36H's r36s_Gamepad, inherited by every
   # child process ES launches.
   systemd.services.emulationstation.environment.SDL_GAMECONTROLLERCONFIG =
@@ -131,12 +132,6 @@
 
   console.enable = false;
   documentation.enable = false;
-
-  # Use the proprietary mali blob for better libultraship/PortMaster perf.
-  # Switch to "panfrost" for the open-source driver if needed — note that
-  # PortMaster prebuilts won't work on panfrost (they require libmali +
-  # /dev/mali0 from mali_kbase).
-  handheld.gpu.driver = "mali";
 
   # Debug tools
   environment.systemPackages = with pkgs; [

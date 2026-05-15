@@ -21,25 +21,13 @@ in
   config = lib.mkMerge [
     (lib.mkIf (cfg.driver == "panfrost") {
       boot.blacklistedKernelModules = [ "mali_kbase" ];
+      boot.kernelModules = [ "panfrost" ];
     })
     (lib.mkIf (cfg.driver == "mali") {
       boot.blacklistedKernelModules = [ "panfrost" ];
       boot.extraModulePackages = [ pkgs.mali-kbase ];
+      boot.kernelModules = [ "mali_kbase" ];
       hardware.graphics.package = pkgs.libmali;
-
-      # PortMaster prebuilt port support — libmali userspace + bwrap FHS env.
-      # Only useful in mali mode: the prebuilt binaries open /dev/mali0 directly
-      # and would crash with mali_kbase blacklisted under panfrost.
-      environment.systemPackages = with pkgs; [
-        portmaster-fhs
-        portmaster-launch
-      ];
-    })
-    (lib.mkIf (cfg.driver == "mali" && config.handheld.emulationstation.enable) {
-      systemd.services.emulationstation.path = with pkgs; [
-        portmaster-fhs
-        portmaster-launch
-      ];
 
       # Re-link userspace against libmali so RPATH'd libraries find the right
       # GL/GBM at runtime, not just via /run/opengl-driver dispatch.
