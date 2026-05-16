@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.handheld.gpu;
@@ -6,7 +11,10 @@ in
 {
   options.handheld.gpu = {
     driver = lib.mkOption {
-      type = lib.types.enum [ "panfrost" "mali" ];
+      type = lib.types.enum [
+        "panfrost"
+        "mali"
+      ];
       default = "panfrost";
       description = ''
         GPU driver stack to use.

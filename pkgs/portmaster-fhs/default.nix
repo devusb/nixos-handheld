@@ -21,7 +21,11 @@
   unzip,
   util-linux,
   # Override to `[ libmali ]` in mali mode.
-  gpuPackages ? [ mesa libglvnd libGL ],
+  gpuPackages ? [
+    mesa
+    libglvnd
+    libGL
+  ],
 }:
 buildFHSEnv {
   name = "portmaster-run";

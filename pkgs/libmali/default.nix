@@ -11,7 +11,10 @@ stdenv.mkDerivation {
   pname = "libmali-bifrost-g31";
   version = "g13p0";
 
-  outputs = [ "out" "dev" ];
+  outputs = [
+    "out"
+    "dev"
+  ];
 
   src = fetchFromGitHub {
     owner = "ROCKNIX";
@@ -20,7 +23,11 @@ stdenv.mkDerivation {
     hash = "sha256-zqIhfIHDE8MZiupPjrX04flwACDS8pcq1tX4S94H0mY=";
   };
 
-  nativeBuildInputs = [ meson ninja pkg-config ];
+  nativeBuildInputs = [
+    meson
+    ninja
+    pkg-config
+  ];
   buildInputs = [ libdrm ];
   propagatedBuildInputs = [ libdrm ];
 

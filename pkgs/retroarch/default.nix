@@ -9,7 +9,9 @@
   libgbm ? null,
 }:
 (retroarch-bare.override (
-  { withWayland = false; }
+  {
+    withWayland = false;
+  }
   // lib.optionalAttrs (libGL != null) { inherit libGL; }
   // lib.optionalAttrs (libGLU != null) { inherit libGLU; }
   // lib.optionalAttrs (libgbm != null) { inherit libgbm; }
