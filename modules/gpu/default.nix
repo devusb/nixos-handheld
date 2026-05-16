@@ -37,18 +37,6 @@ in
       boot.kernelModules = [ "mali_kbase" ];
       hardware.graphics.package = pkgs.libmali;
 
-      # Re-link userspace against libmali so RPATH'd libraries find the right
-      # GL/GBM at runtime, not just via /run/opengl-driver dispatch.
-      #
-      # SDL2_classic flows transitively into ES, DraStic, and SDL2_classic_mixer.
-      # emulationstation-fcamod additionally takes mesa+libglvnd as direct
-      # inputs (CMake reads libglvnd's GLESv2.so path), so it needs an explicit
-      # override even though SDL2 is already covered.
-      # retroarch-bare's libGL/libGLU/libgbm parameters control its configure
-      # flags and final link line.
-      # mkAfter so we run after the base overlay defines SDL2_classic,
-      # libmali, etc. — otherwise our `prev.SDL2_classic.override` references
-      # an undefined attribute and silently does nothing.
       nixpkgs.overlays = lib.mkAfter [
         (final: prev: {
           SDL2_classic = prev.SDL2_classic.override {
@@ -60,12 +48,6 @@ in
             mesa = final.libmali;
             libglvnd = final.libmali;
           };
-          retroarch-bare = prev.retroarch-bare.override {
-            libGL = final.libmali;
-            libGLU = final.libmali;
-            libgbm = final.libmali;
-          };
-          # libmali isn't a libglvnd vendor — substitute it directly.
           portmaster-fhs = prev.portmaster-fhs.override {
             gpuPackages = [ final.libmali ];
           };

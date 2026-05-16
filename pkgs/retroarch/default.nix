@@ -4,6 +4,7 @@
   ffmpeg_7,
   qt6,
   wrapGAppsHook3,
+  autoAddDriverRunpath,
   libGL ? null,
   libGLU ? null,
   libgbm ? null,
@@ -22,7 +23,9 @@
       qt6.qtbase
       wrapGAppsHook3
     ] old.buildInputs;
-    nativeBuildInputs = lib.remove qt6.wrapQtAppsHook old.nativeBuildInputs;
+    nativeBuildInputs = (lib.remove qt6.wrapQtAppsHook old.nativeBuildInputs) ++ [
+      autoAddDriverRunpath
+    ];
     configureFlags = (old.configureFlags or [ ]) ++ [
       "--disable-pulse"
       "--disable-qt"
