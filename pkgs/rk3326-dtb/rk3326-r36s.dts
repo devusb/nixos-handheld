@@ -74,15 +74,18 @@
 		button-adc-fuzz = <32>;
 		button-adc-flat = <32>;
 
-		/* Per-axis tuning (percentage, 180 = 1.8x) */
-		abs_x-p-tuning = <180>;
-		abs_x-n-tuning = <180>;
-		abs_y-p-tuning = <180>;
-		abs_y-n-tuning = <180>;
-		abs_rx-p-tuning = <180>;
-		abs_rx-n-tuning = <180>;
-		abs_ry-p-tuning = <180>;
-		abs_ry-n-tuning = <180>;
+		/* Per-axis tuning calibrated to this specific unit via evtest —
+		 * R36H stick asymmetry varies per device, so don't ship verbatim.
+		 * Note: for invert-absx/y, p-tuning applies to the physical side
+		 * that maps to SDL-negative (left/up). */
+		abs_x-p-tuning  = <275>;
+		abs_x-n-tuning  = <210>;
+		abs_y-p-tuning  = <230>;
+		abs_y-n-tuning  = <270>;
+		abs_rx-p-tuning = <260>;
+		abs_rx-n-tuning = <210>;
+		abs_ry-p-tuning = <225>;
+		abs_ry-n-tuning = <265>;
 
 		invert-absx;
 		invert-absy;
