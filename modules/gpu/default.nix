@@ -57,6 +57,10 @@ in
             libGLU = final.libmali;
             libgbm = final.libmali;
           };
+          # libmali isn't a libglvnd vendor — substitute it directly.
+          portmaster-fhs = prev.portmaster-fhs.override {
+            gpuPackages = [ final.libmali ];
+          };
         })
       ];
     })
