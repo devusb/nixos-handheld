@@ -66,6 +66,48 @@
   ];
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
 
+  # Default to panfrost; hold Vol- at power-on to boot into the mali specialisation.
+  specialisation.mali = {
+    inheritParentConfig = true;
+    configuration.handheld.gpu.driver = "mali";
+  };
+
+  # Initrd hook: run before NixOS resolves the closure, repoint /sysroot/init
+  # so find-nixos-closure picks the mali specialisation when Vol- is held.
+  boot.initrd.systemd.storePaths = [ pkgs.evtest ];
+  boot.initrd.systemd.services.handheld-gpu-picker = {
+    description = "GPU specialisation picker";
+    wantedBy = [ "initrd.target" ];
+    before = [ "initrd-find-nixos-closure.service" ];
+    after = [ "initrd-fs.target" ];
+    unitConfig.DefaultDependencies = "no";
+    serviceConfig.Type = "oneshot";
+    path = [
+      pkgs.coreutils
+      pkgs.evtest
+    ];
+    script = ''
+      base=/nix/var/nix/profiles/system
+
+      # Reset to panfrost so the previous boot's choice doesn't stick.
+      ln -sfn "$base/init" /sysroot/init
+
+      # Locate the volume-keys evdev by device name.
+      eventdev=
+      for entry in /sys/class/input/event*; do
+        if [ "$(cat "$entry/device/name" 2>/dev/null)" = "gpio-keys-vol" ]; then
+          eventdev="/dev/input/$(basename "$entry")"
+          break
+        fi
+      done
+
+      # evtest --query exits 10 if KEY_VOLUMEDOWN is currently held, 0 otherwise.
+      if [ -n "$eventdev" ] && ! evtest --query "$eventdev" EV_KEY KEY_VOLUMEDOWN; then
+        ln -sfn "$base/specialisation/mali/init" /sysroot/init
+      fi
+    '';
+  };
+
   # USB gadget ethernet
   networking.interfaces.usb0 = {
     ipv4.addresses = [
