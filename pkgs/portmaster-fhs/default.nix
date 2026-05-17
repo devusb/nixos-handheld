@@ -53,7 +53,7 @@ buildFHSEnv {
     ];
   # Win over libglvnd's dispatcher when both are in the sandbox.
   profile = ''
-    export LD_LIBRARY_PATH="${lib.makeLibraryPath gpuPackages}:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH="${lib.makeLibraryPath gpuPackages}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
   '';
   runScript = "${bash}/bin/bash";
 }

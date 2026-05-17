@@ -15,5 +15,5 @@ writeShellScriptBin "portmaster-launch" ''
 
   # CFW_NAME=NixOS so PortMaster's upstream launchers source our
   # /roms/ports/PortMaster/mod_NixOS.txt for device-specific overrides.
-  exec ${portmaster-fhs}/bin/portmaster-run -c "CFW_NAME=NixOS bash '$SCRIPT'"
+  exec ${portmaster-fhs}/bin/portmaster-run -c 'CFW_NAME=NixOS bash "$0"' "$SCRIPT"
 ''
