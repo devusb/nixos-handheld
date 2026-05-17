@@ -52,4 +52,16 @@ final: prev: {
     love = prev.love;
     balatro = prev.balatro;
   };
+
+  libmali = final.callPackage ./pkgs/libmali { };
+
+  mali-kbase = final.callPackage ./pkgs/mali-kbase {
+    kernel = final.linux-rk3326;
+  };
+
+  portmaster-fhs = final.callPackage ./pkgs/portmaster-fhs {
+    SDL2 = final.SDL2_classic;
+  };
+
+  portmaster-launch = final.callPackage ./pkgs/portmaster-launch { };
 }

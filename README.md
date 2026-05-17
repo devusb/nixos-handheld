@@ -65,11 +65,30 @@ Create these directories on the roms card:
 - **D-pad / Left stick** — navigate EmulationStation menus
 - **A** — select, **B** — back
 - **Start** — open ES main menu (system info, quit, shutdown)
-- **Start + Select** — open RetroArch quick menu (in-game)
+- **L1 + R1 + Start + Select** — open RetroArch quick menu (in-game)
 - **L3 (left stick click)** — DraStic menu (in NDS games)
 - **Volume Up / Down** — adjust audio volume (hardware buttons)
 - **Power button (short press)** — suspend
 - **Power button (long press)** — force power off
+
+## GPU Mode (Panfrost vs Mali)
+
+Two GPU stacks are available, selected at boot:
+
+- **Panfrost** (default) — open-source Mali-G31 driver via Mesa. Better for RetroArch cores.
+- **Mali** — ARM proprietary blob (`mali_kbase` kernel module + `libmali` userspace). Unfree. Better for PortMaster.
+
+To boot into mali mode, **hold Volume Down** while powering on. Otherwise, panfrost loads.
+
+Both modes share a single set of generations — mali is a NixOS specialisation of the panfrost base. The picker runs in initrd, queries the `gpio-keys-vol` input device, and repoints `/sysroot/init` to the alternate specialisation's toplevel before `find-nixos-closure` resolves the closure to boot.
+
+Configured via `handheld.gpu.driver` (default driver) plus `handheld.gpu.specialisation.{enable,picker.enable}` to enable the alternate spec and hold-button switch.
+
+## PortMaster
+
+PortMaster is available in both GPU modes, but runs noticeably better on mali.
+
+The runtime lives in a `buildFHSEnv` sandbox (`pkgs/portmaster-fhs`) that provides the standard Linux library layout PortMaster's prebuilt binaries expect (`/usr/lib`, `/lib64`, dynamic loader, etc. — which NixOS doesn't have on the host). Launch scripts (`/roms/ports/*.sh`) call `portmaster-launch` which enters the bwrap sandbox and exports `CFW_NAME=NixOS` so PortMaster's launchers source `/roms/ports/PortMaster/mod_NixOS.txt` for device-specific control wiring.
 
 ## NixOS Module Options
 
@@ -92,6 +111,7 @@ Device-specific values (ROM root, ES theme, ES config directory, DraStic state d
 - EmulationStation game browser with GBZ35 Mod theme
 - RetroArch across + DraStic for NDS
 - DraStic standalone DS emulator with R36S button mapping
+- PortMaster prebuilt ports (in mali GPU mode; works on panfrost but slower)
 - Display (640x480, Panfrost GLES, brightness control via sysfs)
 - Unified gamepad (buttons + dual analog sticks as single input device)
 - Audio (PipeWire, auto-switches between speaker and USB audio devices, volume buttons via wpctl)
@@ -114,7 +134,7 @@ Device-specific values (ROM root, ES theme, ES config directory, DraStic state d
 - **Frontend**: EmulationStation-fcamod (351v branch) with SDL2_classic KMSDRM backend
 - **Emulators**: RetroArch + DraStic (NDS)
 - **Kernel**: Mainline Linux 6.19 via `linuxPackages_latest` + `structuredExtraConfig`
-- **GPU**: Panfrost (open-source Mali-G31 driver via Mesa)
+- **GPU**: Panfrost (default, Mesa) or Mali blob (libmali + mali_kbase). Swapped at boot via Volume Down hold; see GPU Mode section.
 - **Display**: Out-of-tree ROCKNIX generic-dsi panel driver with NV3051D init sequence
 - **Input**: Out-of-tree ROCKNIX singleadc-joypad driver (ADC sticks + GPIO buttons as one device)
 - **Boot**: Armbian U-Boot → boot.ini → kernel + initrd + DTB from ext4 rootfs

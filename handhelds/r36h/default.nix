@@ -60,12 +60,17 @@
   ];
 
   boot.kernelModules = [
-    "panfrost"
     "g_ether"
     "rockchip_saradc"
     "rocknix_singleadc_joypad"
   ];
   boot.kernelParams = [ "usbcore.autosuspend=-1" ];
+
+  # Default to panfrost; hold Vol- at power-on to boot into the mali specialisation.
+  handheld.gpu.specialisation = {
+    enable = true;
+    picker.enable = true;
+  };
 
   # USB gadget ethernet
   networking.interfaces.usb0 = {
@@ -116,6 +121,8 @@
   handheld.emulationstation.enable = true;
   handheld.emulationstation.inputConfigFile = ./es_input.cfg;
   handheld.emulationstation.drastic.configFile = ./drastic.cfg;
+
+  handheld.portmaster.enable = true;
 
   # SDL gamecontroller mapping for the R36H's r36s_Gamepad, inherited by every
   # child process ES launches.

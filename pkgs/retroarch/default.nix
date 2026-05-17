@@ -4,17 +4,28 @@
   ffmpeg_7,
   qt6,
   wrapGAppsHook3,
+  autoAddDriverRunpath,
+  libGL ? null,
+  libGLU ? null,
+  libgbm ? null,
 }:
-(retroarch-bare.override {
-  withWayland = false;
-}).overrideAttrs
+(retroarch-bare.override (
+  {
+    withWayland = false;
+  }
+  // lib.optionalAttrs (libGL != null) { inherit libGL; }
+  // lib.optionalAttrs (libGLU != null) { inherit libGLU; }
+  // lib.optionalAttrs (libgbm != null) { inherit libgbm; }
+)).overrideAttrs
   (old: {
     buildInputs = lib.lists.subtractLists [
       ffmpeg_7
       qt6.qtbase
       wrapGAppsHook3
     ] old.buildInputs;
-    nativeBuildInputs = lib.remove qt6.wrapQtAppsHook old.nativeBuildInputs;
+    nativeBuildInputs = (lib.remove qt6.wrapQtAppsHook old.nativeBuildInputs) ++ [
+      autoAddDriverRunpath
+    ];
     configureFlags = (old.configureFlags or [ ]) ++ [
       "--disable-pulse"
       "--disable-qt"
