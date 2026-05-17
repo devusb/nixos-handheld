@@ -6,7 +6,14 @@
 }:
 
 let
-  inherit (lib) mkIf mkMerge mkOption mkEnableOption mkAfter types;
+  inherit (lib)
+    mkIf
+    mkMerge
+    mkOption
+    mkEnableOption
+    mkAfter
+    types
+    ;
 
   cfg = config.handheld.gpu;
   altDriver = if cfg.driver == "panfrost" then "mali" else "panfrost";
