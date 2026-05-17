@@ -20,6 +20,16 @@
   curl,
   unzip,
   util-linux,
+  procps,
+  freetype,
+  fontconfig,
+  harfbuzz,
+  libjpeg,
+  bzip2,
+  xz,
+  libGLU,
+  expat,
+  gptokeyb2,
   # Override to `[ libmali ]` in mali mode.
   gpuPackages ? [
     mesa
@@ -34,6 +44,7 @@ buildFHSEnv {
     [
       SDL2
       SDL2_net
+      gptokeyb2
     ]
     ++ gpuPackages
     ++ [
@@ -50,10 +61,22 @@ buildFHSEnv {
       curl
       unzip
       util-linux
+      procps
+      freetype
+      fontconfig
+      harfbuzz
+      libjpeg
+      bzip2
+      xz
+      libGLU
+      expat
     ];
   # Win over libglvnd's dispatcher when both are in the sandbox.
+  # GPTOKEYB is the env var PortMaster launch scripts expect; mod_NixOS.txt
+  # can override it but ports without device-specific wiring still work.
   profile = ''
     export LD_LIBRARY_PATH="${lib.makeLibraryPath gpuPackages}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export GPTOKEYB=gptokeyb
   '';
   runScript = "${bash}/bin/bash";
 }

@@ -26,6 +26,11 @@ in
           cfg.package
           cfg.launchPackage
         ];
+
+        boot.kernelModules = [ "uinput" ];
+        services.udev.extraRules = ''
+          KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
+        '';
       }
       (lib.mkIf config.handheld.emulationstation.enable {
         systemd.services.emulationstation.path = [
