@@ -2,6 +2,7 @@
   lib,
   buildFHSEnv,
   SDL2,
+  SDL2_mixer,
   SDL2_net,
   mesa,
   libglvnd,
@@ -29,6 +30,9 @@
   xz,
   libGLU,
   expat,
+  libtheora,
+  which,
+  usbutils,
   gptokeyb2,
   # Override to `[ libmali ]` in mali mode.
   gpuPackages ? [
@@ -43,6 +47,7 @@ buildFHSEnv {
     _:
     [
       SDL2
+      SDL2_mixer
       SDL2_net
       gptokeyb2
     ]
@@ -70,6 +75,9 @@ buildFHSEnv {
       xz
       libGLU
       expat
+      libtheora
+      which
+      usbutils
     ];
   # Win over libglvnd's dispatcher when both are in the sandbox.
   # GPTOKEYB is the env var PortMaster launch scripts expect; mod_NixOS.txt
