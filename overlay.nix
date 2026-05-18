@@ -64,4 +64,6 @@ final: prev: {
   };
 
   portmaster-launch = final.callPackage ./pkgs/portmaster-launch { };
+
+  gptokeyb2 = final.callPackage ./pkgs/gptokeyb2 { };
 }
