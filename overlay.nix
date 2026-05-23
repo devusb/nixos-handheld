@@ -66,4 +66,25 @@ final: prev: {
   portmaster-launch = final.callPackage ./pkgs/portmaster-launch { };
 
   gptokeyb2 = final.callPackage ./pkgs/gptokeyb2 { };
+
+  battleship =
+    (prev.battleship.override {
+      SDL2 = final.SDL2_classic;
+    }).overrideAttrs
+      (old: {
+        buildInputs = prev.lib.filter (
+          p:
+          !builtins.elem (prev.lib.getName p) [
+            "glew"
+            "libX11"
+            "libXrandr"
+            "libXinerama"
+            "libXcursor"
+            "libXi"
+          ]
+        ) old.buildInputs;
+        cmakeFlags = old.cmakeFlags ++ [
+          (prev.lib.cmakeBool "USE_OPENGLES" true)
+        ];
+      });
 }

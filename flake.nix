@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-packages.url = "github:devusb/nix-packages/battleship";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     systems.url = "github:nix-systems/default";
   };
@@ -11,6 +12,7 @@
     {
       self,
       nixpkgs,
+      nix-packages,
       treefmt-nix,
       systems,
     }:
@@ -19,7 +21,7 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ self.overlays.default ];
+        overlays = [ nix-packages.overlays.default self.overlays.default ];
       };
       eachSystem = f: nixpkgs.lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
       treefmtEval = eachSystem (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
@@ -35,7 +37,7 @@
           ./handhelds/r36h
           {
             nixpkgs.config.allowUnfree = true;
-            systemd.services.emulationstation.path = [ pkgs.balatro ];
+            systemd.services.emulationstation.path = [ pkgs.balatro pkgs.battleship ];
           }
         ];
       };
