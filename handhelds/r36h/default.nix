@@ -23,9 +23,9 @@
 
   hardware.enableAllHardware = lib.mkForce false;
 
-  # Armbian U-Boot with ext4 support
-  handheld.uboot = ./blobs/u-boot-rockchip.bin;
-  handheld.bootIni = ./boot.ini;
+  # U-Boot built from source (AndreRenaud/u-boot-r36s) — see pkgs/u-boot-r36s.
+  # handheld.uboot defaults to ${pkgs.u-boot-r36s}/u-boot-rockchip.bin.
+  handheld.bootCmd = ./boot.cmd;
   handheld.panChoIni = ./firmware/PanCho.ini;
   handheld.logoEnv = ./firmware/logo.env;
   handheld.panelDtbo = ./firmware/panel4/mipi-panel.dtbo;

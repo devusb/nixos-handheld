@@ -2,7 +2,7 @@
 #
 # Wraps NixOS's built-in sd-image.nix. Customizes:
 #   - U-Boot blob dd'd to raw sector offset 64
-#   - FAT32 firmware partition for boot.ini + panel assets
+#   - FAT32 firmware partition for boot.scr + panel assets
 #   - Custom boot loader installer for generation support
 
 {
@@ -37,12 +37,14 @@ in
   options.handheld = {
     uboot = lib.mkOption {
       type = lib.types.path;
+      default = "${pkgs.u-boot-r36s}/u-boot-rockchip.bin";
+      defaultText = lib.literalExpression ''"''${pkgs.u-boot-r36s}/u-boot-rockchip.bin"'';
       description = "Path to combined U-Boot blob (u-boot-rockchip.bin)";
     };
 
-    bootIni = lib.mkOption {
+    bootCmd = lib.mkOption {
       type = lib.types.path;
-      description = "Path to boot.ini U-Boot script";
+      description = "Path to boot.cmd U-Boot script source (will be mkimage-wrapped to boot.scr)";
     };
 
     panChoIni = lib.mkOption {
@@ -105,9 +107,12 @@ in
       firmwarePartitionOffset = 16; # MB
       firmwareSize = 100; # MB
 
-      # Populate firmware (FAT) partition with boot.ini + panel assets
+      # Populate firmware (FAT) partition with boot.scr + panel assets
       populateFirmwareCommands = ''
-        cp ${cfg.bootIni} firmware/boot.ini
+        ${lib.getExe' pkgs.buildPackages.ubootTools "mkimage"} \
+          -A arm64 -O linux -T script -C none \
+          -n "R36H boot.scr" \
+          -d ${cfg.bootCmd} firmware/boot.scr
         ${lib.optionalString (cfg.panChoIni != null) "cp ${cfg.panChoIni} firmware/PanCho.ini"}
         ${lib.optionalString (cfg.logoEnv != null) "cp ${cfg.logoEnv} firmware/logo.env"}
         mkdir -p firmware/ScreenFiles/Panel4

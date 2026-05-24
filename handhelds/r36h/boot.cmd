@@ -1,5 +1,3 @@
-odroidgoa-uboot-config
-
 setenv dtbo_loadaddr  0x01e00000
 setenv dtb_loadaddr   0x01f00000
 setenv loadaddr       0x02000000
