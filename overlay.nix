@@ -66,4 +66,8 @@ final: prev: {
   portmaster-launch = final.callPackage ./pkgs/portmaster-launch { };
 
   gptokeyb2 = final.callPackage ./pkgs/gptokeyb2 { };
+
+  rkbin-tools = final.callPackage ./pkgs/rkbin-tools { };
+
+  u-boot-r36s = final.callPackage ./pkgs/u-boot-r36s { };
 }
