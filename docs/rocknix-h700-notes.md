@@ -87,6 +87,17 @@ Decision: **defer this until U-Boot strategy is resolved** (see "Open decision" 
 - Package: `projects/ROCKNIX/packages/linux-drivers/rocknix-joypad/package.mk` at upstream commit `7647fdb0fc89cd69b284903bf7707e861df5dc7e`
 - H700 bindings in DTS differ from RK3326 (different ADC controller, different GPIO scheme), but the driver itself is the same kernel module — supports both via DTS
 
+### DTS-binding correction (2026-05-25)
+
+The plan's amendment #5 stated the mainline `sun50i-h700-anbernic-rg35xx-2024.dts` already wires the `rocknix-joypad` device. Inspection of mainline U-Boot 2026.04's vendored DTS copy proves otherwise:
+
+- Buttons (face buttons, D-pad, L/R, start/select) are wired via a `gpio-keys` node (`gpio_keys_gamepad`) — these will work out of the box with `CONFIG_KEYBOARD_GPIO=y`, no out-of-tree driver needed.
+- Joystick axes are NOT wired. There is no `joypad` node and nothing references `&axp_adc` as an `io-channels` consumer. ROCKNIX adds these bindings via their own kernel patches (`projects/ROCKNIX/devices/H700/patches/linux/` series 0030–0040), not via the upstream DTS.
+
+For v1 this means:
+- `pkgs.rocknix-joypad` still compiles against `linux-h700` and is in `boot.extraModulePackages` so it's loadable, but the kernel module will not bind to any device until the DTS overlay gains a `joypad` node.
+- Hardware bring-up will need a follow-up DTS patch in `pkgs/h700-dtb/sun50i-h700-anbernic-rg28xx.dts` modelled on ROCKNIX's bindings (channel numbers per axis, GPIO references for L3/R3/menu).
+
 ## PMIC
 
 - AXP717 — supported by mainline `axp20x` family drivers (`MFD_AXP20X_I2C`, `REGULATOR_AXP20X`, etc.)
