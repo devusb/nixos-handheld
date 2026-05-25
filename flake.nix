@@ -5,6 +5,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     systems.url = "github:nix-systems/default";
+    nix-packages.url = "github:devusb/nix-packages";
+    nix-packages.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -13,13 +15,17 @@
       nixpkgs,
       treefmt-nix,
       systems,
+      nix-packages,
     }:
     let
       system = "aarch64-linux";
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
-        overlays = [ self.overlays.default ];
+        overlays = [
+          self.overlays.default
+          nix-packages.overlays.default
+        ];
       };
       eachSystem = f: nixpkgs.lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
       treefmtEval = eachSystem (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
@@ -35,7 +41,10 @@
           ./handhelds/r36h
           {
             nixpkgs.config.allowUnfree = true;
-            systemd.services.emulationstation.path = [ pkgs.balatro ];
+            systemd.services.emulationstation.path = [
+              pkgs.balatro
+              pkgs.openjkdf2-gles
+            ];
           }
         ];
       };
