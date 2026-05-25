@@ -7,6 +7,7 @@
     ./emulationstation
     ./gpu
     ./portmaster
+    ./fake-suspend
     ./hardware.nix
     ./diagnostics.nix
   ];
