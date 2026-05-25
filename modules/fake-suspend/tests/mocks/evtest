@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Mock evtest that logs invocations to $STATE_DIR/evtest.log and exits immediately
+echo "$@" >> "$STATE_DIR/evtest.log"
+exit 0

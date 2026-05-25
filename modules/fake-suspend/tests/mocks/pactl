@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Mock pactl that logs invocations to $STATE_DIR/pactl.log
+echo "$@" >> "$STATE_DIR/pactl.log"
