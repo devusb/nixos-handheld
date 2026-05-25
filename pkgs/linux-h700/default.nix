@@ -1,11 +1,3 @@
-# Kernel for Allwinner H700-based handhelds (RG28XX et al.).
-#
-# Same shape as pkgs/linux-rk3326/default.nix: take the mainline source from
-# linuxPackages_latest, run the static defconfig through `make` so Kconfig
-# can resolve dependencies, then feed the resulting .config to
-# linuxManualConfig. allowImportFromDerivation pulls the .config back into
-# Nix evaluation; features={} short-circuits the assertions
-# `linuxPackagesFor` would otherwise run against passthru.features.
 {
   lib,
   linuxPackages_latest,

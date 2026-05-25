@@ -1,20 +1,10 @@
 # SD card image module for Allwinner H700 handhelds.
 #
-# Sibling to socs/rk3326.nix, but takes a much simpler boot path:
-# mainline U-Boot (anbernic_rg35xx_h700_defconfig) is built with
-# CONFIG_DISTRO_DEFAULTS, so it scans MMC partitions for
-# `extlinux/extlinux.conf` and `boot.scr`. NixOS's stock
-# `boot.loader.generic-extlinux-compatible` writes the former on every
-# nixos-rebuild — no custom installBootLoader needed (unlike R36H, where
-# Armbian U-Boot reads fixed paths from boot.ini).
-#
-# Partition layout matches R36H structurally: a small FAT firmware
-# partition followed by the ext4 NixOS root. The FAT partition is unused
-# at runtime here — kept for symmetry and as a parking spot for any
-# future per-device firmware blobs.
-#
-# U-Boot blob is dd'd to byte offset 8 KiB (sector 16). ROCKNIX's
-# bootloader/update.sh confirms this offset; see docs/rocknix-h700-notes.md.
+# Sibling to socs/rk3326.nix. Uses NixOS's stock
+# generic-extlinux-compatible because mainline U-Boot's
+# anbernic_rg35xx_h700_defconfig is built with CONFIG_DISTRO_DEFAULTS
+# (no custom installBootLoader needed). U-Boot SPL dd'd at 8 KiB
+# (sector 16) per ROCKNIX bootloader/update.sh.
 
 {
   config,
