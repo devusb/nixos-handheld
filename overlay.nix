@@ -15,6 +15,8 @@ final: prev: {
     kernel = final.linuxPackages_latest.kernel;
   };
 
+  u-boot-rg28xx = final.callPackage ./pkgs/u-boot-rg28xx { };
+
   retroarch-joypad-autoconfig = final.callPackage ./pkgs/retroarch-joypad-autoconfig {
     retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig;
   };
