@@ -3,6 +3,10 @@ final: prev: {
     linuxPackages_latest = prev.linuxPackages_latest;
   };
 
+  linux-h700 = final.callPackage ./pkgs/linux-h700 {
+    linuxPackages_latest = prev.linuxPackages_latest;
+  };
+
   rk3326-dtb = final.callPackage ./pkgs/rk3326-dtb {
     kernel = final.linux-rk3326;
   };
