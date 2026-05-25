@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Anbernic RG28XX device tree overlay.
+ *
+ * The RG28XX shares most of its hardware with the RG35XX Plus — same SoC,
+ * PMIC, joypad, audio, and WiFi/SDIO topology — so the base DTS is the
+ * mainline rg35xx-plus.dts (which itself extends rg35xx-2024.dts).
+ *
+ * Panel binding is deliberately omitted here: the RG28XX uses an SPI-driven
+ * generic MIPI panel via the kikuchan98 panel-mipi-dpi-spi driver, which is
+ * not yet in mainline Linux (v7.0). ROCKNIX's full chain is:
+ *   - kernel patch 0110: adds the panel-mipi-dpi-spi DRM driver
+ *   - kernel patch 0111: adds the &panel node to the rg35xx-2024 base DTS
+ *   - device overlay (this file): sets the panel compatible to anbernic,rg28xx-panel
+ * Without the kernel patches, &panel is a dangling label. The panel binding
+ * will be added back in conjunction with whatever panel driver story we
+ * settle on (kikuchan98 patch carry vs. mainline waitlist).
+ *
+ * Adapted from ROCKNIX's sun50i-h700-anbernic-rg28xx.dts. The rocknix-dt-id
+ * property is dropped — ROCKNIX uses it for their runtime DTB picker, which
+ * we do not implement.
+ *
+ * Copyright (C) 2024 Ryan Walklin <ryan@testtoast.com>.
+ * Copyright (C) 2024 Chris Morgan <macroalpha82@gmail.com>.
+ */
+
+#include "sun50i-h700-anbernic-rg35xx-plus.dts"
+
+/ {
+	model = "Anbernic RG28XX";
+	compatible = "anbernic,rg28xx", "allwinner,sun50i-h700";
+};

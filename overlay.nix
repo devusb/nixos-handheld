@@ -7,6 +7,14 @@ final: prev: {
     kernel = final.linux-rk3326;
   };
 
+  # h700-dtb compiles only the RG28XX overlay; its base DTS
+  # (sun50i-h700-anbernic-rg35xx-plus.dts) and DT bindings are upstream, so
+  # the stock linuxPackages_latest source suffices — no dependency on a
+  # custom linux-h700 build.
+  h700-dtb = final.callPackage ./pkgs/h700-dtb {
+    kernel = final.linuxPackages_latest.kernel;
+  };
+
   retroarch-joypad-autoconfig = final.callPackage ./pkgs/retroarch-joypad-autoconfig {
     retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig;
   };
