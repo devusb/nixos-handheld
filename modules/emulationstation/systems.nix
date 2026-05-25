@@ -52,6 +52,11 @@ let
       extensions = ".md .gen .bin .MD .GEN .BIN .zip .ZIP .7z";
       retroarchCore = libretro.genesis-plus-gx;
     };
+    segacd = {
+      fullname = "Sega CD";
+      extensions = ".cue .zip .ZIP .7z .CUE .m3u .M3U .chd .CHD";
+      retroarchCore = libretro.picodrive;
+    };
     sega32x = {
       fullname = "Sega 32X";
       extensions = ".32x .32X .zip .ZIP .7z";
