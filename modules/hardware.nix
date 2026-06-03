@@ -32,8 +32,6 @@
     systemWide = true;
   };
 
-  users.users.${config.handheld.emulationstation.user}.extraGroups = [ "pipewire" ];
-
   powerManagement.cpuFreqGovernor = "ondemand";
 
   nix.registry = lib.mkForce { };
