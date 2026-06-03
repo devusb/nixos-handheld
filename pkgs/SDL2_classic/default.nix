@@ -1,5 +1,7 @@
 # Native SDL2 (not sdl2-compat/SDL3) — needed for DraStic which segfaults
-# with SDL3's KMSDRM backend. Minimal build: DRM + ALSA only.
+# with SDL3's KMSDRM backend. Both KMSDRM and Wayland video backends are
+# compiled in; ALSA-only audio. SDL picks the backend at runtime: Wayland
+# when WAYLAND_DISPLAY is set (under cage), KMSDRM otherwise.
 {
   lib,
   stdenv,
@@ -12,6 +14,10 @@
   mesa,
   udev,
   libiconv,
+  wayland,
+  wayland-protocols,
+  wayland-scanner,
+  libxkbcommon,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -33,9 +39,24 @@ stdenv.mkDerivation (finalAttrs: {
 
   patches = [ ./find-headers.patch ];
 
-  strictDeps = true;
-  nativeBuildInputs = [ pkg-config ];
+  # Fix wayland-scanner PATH for cross builds (matches the upstream
+  # nixpkgs SDL2 recipe). See libsdl-org/SDL#4860.
+  postPatch = ''
+    substituteInPlace configure \
+      --replace '$(WAYLAND_SCANNER)' 'wayland-scanner'
+  '';
 
+  strictDeps = true;
+  nativeBuildInputs = [
+    pkg-config
+    wayland-scanner # build-time scanner binary
+  ];
+
+  # SDL2's configure runs `pkg-config --exists wayland-client wayland-scanner
+  # wayland-egl wayland-cursor egl xkbcommon` against PKG_CONFIG_PATH, which
+  # under strictDeps is populated from buildInputs only. wayland-scanner is
+  # split from wayland in modern nixpkgs and ships its own .pc file, so it
+  # must appear here too even though we only use it as a build tool.
   buildInputs = [
     libiconv
     alsa-lib
@@ -44,6 +65,10 @@ stdenv.mkDerivation (finalAttrs: {
     libglvnd
     mesa
     udev
+    wayland
+    wayland-protocols
+    wayland-scanner
+    libxkbcommon
   ];
 
   enableParallelBuilding = true;
@@ -51,7 +76,6 @@ stdenv.mkDerivation (finalAttrs: {
   configureFlags = [
     "--disable-oss"
     "--without-x"
-    "--disable-video-wayland"
     "--disable-video-x11"
     "--disable-pulseaudio"
     "--disable-pipewire"
@@ -62,6 +86,7 @@ stdenv.mkDerivation (finalAttrs: {
     "--disable-sndio"
     "--disable-libdecor"
     "--enable-video-kmsdrm"
+    "--enable-video-wayland"
     "--enable-video-opengles"
     "--enable-alsa"
   ];
@@ -79,6 +104,8 @@ stdenv.mkDerivation (finalAttrs: {
         libglvnd
         mesa
         udev
+        wayland
+        libxkbcommon
       ];
     in
     ''
@@ -92,7 +119,7 @@ stdenv.mkDerivation (finalAttrs: {
   setupHook = ./setup-hook.sh;
 
   meta = {
-    description = "Native SDL2 (not sdl2-compat) with KMSDRM support";
+    description = "Native SDL2 (not sdl2-compat) with KMSDRM + Wayland support";
     homepage = "http://www.libsdl.org/";
     license = lib.licenses.zlib;
     platforms = lib.platforms.linux;
