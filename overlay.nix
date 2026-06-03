@@ -23,9 +23,7 @@ final: prev: {
 
   rg28xx-panel-firmware = final.callPackage ./pkgs/rg28xx-panel-firmware { };
 
-  # Vendored ROCKNIX prebuilt U-Boot blob — known-good for bring-up.
-  # Source-built variant lives on a separate branch (cherry-pick f106452)
-  # pending a live-test before we can swap to it.
+  # Prebuilt SPL+U-Boot blob from ROCKNIX.
   u-boot-rg28xx-rocknix = final.callPackage ./pkgs/u-boot-rg28xx-rocknix { };
 
   retroarch-joypad-autoconfig = final.callPackage ./pkgs/retroarch-joypad-autoconfig {
