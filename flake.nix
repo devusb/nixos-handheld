@@ -49,14 +49,24 @@
         ];
       };
 
+      nixosConfigurations.rg28xx = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          { nixpkgs.config.allowUnfree = true; }
+          ./handhelds/rg28xx
+        ];
+      };
+
       legacyPackages.${system} = pkgs;
 
       packages.${system} = {
         r36h-image = self.nixosConfigurations.r36h.config.system.build.sdImage;
+        rg28xx-image = self.nixosConfigurations.rg28xx.config.system.build.sdImage;
       };
 
       checks.${system} = {
         nixos-r36h = self.nixosConfigurations.r36h.config.system.build.toplevel;
+        nixos-rg28xx = self.nixosConfigurations.rg28xx.config.system.build.toplevel;
       };
 
       formatter = eachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);

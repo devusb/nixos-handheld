@@ -3,9 +3,30 @@ final: prev: {
     linuxPackages_latest = prev.linuxPackages_latest;
   };
 
+  linux-h700 = final.callPackage ./pkgs/linux-h700 {
+    linuxPackages_latest = prev.linuxPackages_latest;
+    rg28xx-panel-firmware = final.rg28xx-panel-firmware;
+  };
+
   rk3326-dtb = final.callPackage ./pkgs/rk3326-dtb {
     kernel = final.linux-rk3326;
   };
+
+  # h700-dtb compiles the RG28XX overlay against linux-h700's patched
+  # source so cpp's include path resolves to the ROCKNIX-patched
+  # rg35xx-plus.dts (which gains the spi-gpio + panel + backlight nodes
+  # via patch 0126 et al). Without that, the &panel override doesn't
+  # resolve at DT compile time.
+  h700-dtb = final.callPackage ./pkgs/h700-dtb {
+    kernel = final.linux-h700;
+  };
+
+  rg28xx-panel-firmware = final.callPackage ./pkgs/rg28xx-panel-firmware { };
+
+  # Vendored ROCKNIX prebuilt U-Boot blob — known-good for bring-up.
+  # Source-built variant lives on a separate branch (cherry-pick f106452)
+  # pending a live-test before we can swap to it.
+  u-boot-rg28xx-rocknix = final.callPackage ./pkgs/u-boot-rg28xx-rocknix { };
 
   retroarch-joypad-autoconfig = final.callPackage ./pkgs/retroarch-joypad-autoconfig {
     retroarch-joypad-autoconfig = prev.retroarch-joypad-autoconfig;
