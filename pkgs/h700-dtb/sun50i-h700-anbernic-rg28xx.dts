@@ -1,0 +1,22 @@
+// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+/*
+ * Anbernic RG28XX device tree overlay on the (ROCKNIX-patched) mainline
+ * rg35xx-plus base. The &panel reference resolves because ROCKNIX
+ * patches 0111/0126 add spi-gpio + panel + backlight nodes to the
+ * rg35xx-2024 base DTS — we just override the panel compatible to load
+ * the rg28xx-specific firmware blob.
+ *
+ * Copyright (C) 2024 Ryan Walklin <ryan@testtoast.com>.
+ * Copyright (C) 2024 Chris Morgan <macroalpha82@gmail.com>.
+ */
+
+#include "sun50i-h700-anbernic-rg35xx-plus.dts"
+
+/ {
+	model = "Anbernic RG28XX";
+	compatible = "anbernic,rg28xx", "allwinner,sun50i-h700";
+};
+
+&panel {
+	compatible = "anbernic,rg28xx-panel", "panel-mipi-dpi-spi";
+};
