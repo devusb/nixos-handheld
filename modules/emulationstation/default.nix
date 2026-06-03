@@ -220,12 +220,45 @@ in
     };
     user = lib.mkOption {
       type = lib.types.str;
-      default = "gamer";
+      default = config.handheld.user.name;
       description = "User account to run EmulationStation as.";
+    };
+    execScript = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      description = ''
+        The shell script that launches EmulationStation with the right env,
+        restart-loop semantics, and reboot/shutdown handlers. Exposed so
+        external services (e.g. handheld-session under cage) can wrap it
+        instead of duplicating the launcher logic.
+      '';
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf cfg.enable (
+    let
+      esExecScript = pkgs.writeShellScript "emulationstation-run" ''
+        while true; do
+          rm -f /tmp/es-restart /tmp/es-sysrestart /tmp/es-shutdown
+          ${lib.getExe cfg.package} --home /var/lib/emulationstation || true
+          [ -f /tmp/es-restart ] && continue
+          if [ -f /tmp/es-sysrestart ]; then
+            rm -f /tmp/es-sysrestart
+            /run/wrappers/bin/sudo ${lib.getExe' pkgs.systemd "systemctl"} reboot
+            break
+          fi
+          if [ -f /tmp/es-shutdown ]; then
+            rm -f /tmp/es-shutdown
+            /run/wrappers/bin/sudo ${lib.getExe' pkgs.systemd "systemctl"} poweroff
+            break
+          fi
+          break
+        done
+      '';
+    in
+    {
+    handheld.emulationstation.execScript = esExecScript;
+
     handheld.emulationstation.systems = lib.mkDefault defaultSystems;
 
     handheld.emulationstation.retroarchSettings = lib.mkDefault (
@@ -237,16 +270,6 @@ in
         audio_volume = "0.0";
       }
     );
-
-    users.users.${cfg.user} = {
-      isNormalUser = true;
-      uid = 1000;
-      extraGroups = [
-        "input"
-        "video"
-        "audio"
-      ];
-    };
 
     # ES reads es_input.cfg from /etc/emulationstation/ (hardcoded path)
     environment.etc."emulationstation/es_input.cfg".source = esInputCfg;
@@ -351,8 +374,11 @@ in
       };
     };
 
-    # EmulationStation as systemd service — direct DRM/KMS, no compositor
-    systemd.services.emulationstation = {
+    # EmulationStation as systemd service — direct DRM/KMS, no compositor.
+    # When handheld.compositor.enable is true, cage owns the display session
+    # and runs the same execScript itself; we drop this unit to avoid two
+    # things racing for /dev/tty1 and DRM master.
+    systemd.services.emulationstation = lib.mkIf (!config.handheld.compositor.enable) {
       description = "EmulationStation";
       wantedBy = [ "multi-user.target" ];
       after = [
@@ -376,24 +402,7 @@ in
           "HOME=/home/${cfg.user}"
           "SDL_VIDEO_CURSOR_HIDDEN=1"
         ];
-        ExecStart = pkgs.writeShellScript "emulationstation-run" ''
-          while true; do
-            rm -f /tmp/es-restart /tmp/es-sysrestart /tmp/es-shutdown
-            ${lib.getExe cfg.package} --home /var/lib/emulationstation || true
-            [ -f /tmp/es-restart ] && continue
-            if [ -f /tmp/es-sysrestart ]; then
-              rm -f /tmp/es-sysrestart
-              /run/wrappers/bin/sudo ${lib.getExe' pkgs.systemd "systemctl"} reboot
-              break
-            fi
-            if [ -f /tmp/es-shutdown ]; then
-              rm -f /tmp/es-shutdown
-              /run/wrappers/bin/sudo ${lib.getExe' pkgs.systemd "systemctl"} poweroff
-              break
-            fi
-            break
-          done
-        '';
+        ExecStart = esExecScript;
       };
     };
 
@@ -438,5 +447,6 @@ in
       cfg.package
       retroarchPkg
     ];
-  };
+    }
+  );
 }
