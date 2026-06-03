@@ -84,7 +84,7 @@ stdenv.mkDerivation {
     #   @volumeCommand@  → bare integer, "%" appended by C++ (e.g. "80")
     #   @wifiCommand@    → short status string (e.g. "up", "down", "N/A")
     substituteInPlace es-app/src/guis/GuiMenu.cpp \
-      --replace-fail '@batteryCommand@' 'cat /sys/class/power_supply/rk817-battery/capacity 2>/dev/null || echo "?"' \
+      --replace-fail '@batteryCommand@' 'cat /sys/class/power_supply/battery/capacity 2>/dev/null || cat /sys/class/power_supply/rk817-battery/capacity 2>/dev/null || echo "?"' \
       --replace-fail '@volumeCommand@' '${volumeScript}' \
       --replace-fail '@wifiCommand@' 'echo N/A'
   '';
