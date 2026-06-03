@@ -8,10 +8,16 @@
   libGL ? null,
   libGLU ? null,
   libgbm ? null,
+  SDL2_classic,
 }:
 (retroarch-bare.override (
   {
-    withWayland = false;
+    # Native Wayland video driver so RetroArch can render as a Wayland
+    # client under cage without going through SDL2's Wayland backend.
+    withWayland = true;
+    # Match the rest of the stack (ES, DraStic) — nixpkgs default SDL2
+    # is sdl2-compat (SDL3 shim), which breaks both this and DraStic.
+    SDL2 = SDL2_classic;
   }
   // lib.optionalAttrs (libGL != null) { inherit libGL; }
   // lib.optionalAttrs (libGLU != null) { inherit libGLU; }
@@ -29,7 +35,6 @@
     configureFlags = (old.configureFlags or [ ]) ++ [
       "--disable-pulse"
       "--disable-qt"
-      "--disable-wayland"
       "--disable-x11"
       "--disable-xinerama"
       "--disable-xrandr"
