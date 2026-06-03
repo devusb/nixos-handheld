@@ -1,13 +1,12 @@
 # Standalone DTB compilation for Allwinner H700-based handhelds.
 #
-# Runs cpp + dtc directly on our overlay DTS. The base DTS files
-# (sun50i-h700-anbernic-rg35xx-plus.dts and its parent rg35xx-2024.dts) are
-# already in mainline Linux, so they come along via the kernel source unpack
-# that stdenv does via `inherit (kernel) src`. cpp resolves the include
-# chain through the kernel's allwinner DTS directory.
-#
-# Matches pkgs/rk3326-dtb's pattern; same trick lets DTS changes rebuild in
-# ~1s instead of waiting on a full kernel rebuild.
+# Runs cpp + dtc directly on the overlay DTS so DTS-only changes
+# rebuild in ~1s instead of waiting on a full kernel rebuild. The
+# base DTS files (sun50i-h700-anbernic-rg35xx-plus.dts and its
+# parent rg35xx-2024.dts) are already in mainline Linux, so they
+# come along via the kernel source unpack stdenv does through
+# `inherit (kernel) src`. cpp resolves the include chain through
+# the kernel's allwinner DTS directory.
 {
   lib,
   stdenv,

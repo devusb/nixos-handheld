@@ -14,10 +14,7 @@
 let
   inherit (linuxPackages_latest.kernel) src version modDirVersion;
 
-  # ROCKNIX H700 kernel patch series fetched directly from the
-  # distribution repo. Sparse-checkout limits the fetch to the H700
-  # patches dir (~400 KiB) instead of pulling the full 500 MiB tree.
-  # Bump rev + hash together to roll forward.
+  # ROCKNIX H700 kernel patch series.
   rocknixPatches = fetchFromGitHub {
     owner = "ROCKNIX";
     repo = "distribution";
@@ -26,10 +23,10 @@ let
     hash = "sha256-XXaEd617pSl4zBzFIU4f3QrM1/nkA7b/DzK5bZTv398=";
   };
 
-  # Applied wholesale. DTS-only patches are redundant at runtime (we
-  # use h700-dtb-rocknix) but are kept here so the kernel source tree
-  # matches ROCKNIX's. Trim once we've identified which patches are
-  # actually doing work.
+  # Applied wholesale. DTS-only patches are redundant at runtime
+  # (the DTB build pulls the same DTS via the patched kernel source),
+  # but kept here so the kernel source tree matches upstream's
+  # expectation for the rest of the patches.
   patches = map (n: "${rocknixPatches}/projects/ROCKNIX/devices/H700/patches/linux/${n}") [
     "0002-rg35xx-enable-HDMI-LCD.patch"
     "0003-Update-sun8i_tcon_top.c.patch"

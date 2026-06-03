@@ -1,11 +1,11 @@
 # Allwinner H700 SoC platform module — SD card image wiring plus
 # SoC-level runtime quirks shared by every H700 handheld.
 #
-# Sibling to socs/rk3326.nix. Uses NixOS's stock
-# generic-extlinux-compatible because mainline U-Boot's
-# anbernic_rg35xx_h700_defconfig is built with CONFIG_DISTRO_DEFAULTS
-# (no custom installBootLoader needed). U-Boot SPL dd'd at 8 KiB
-# (sector 16) per ROCKNIX bootloader/update.sh.
+# Uses NixOS's stock generic-extlinux-compatible because mainline
+# U-Boot's anbernic_rg35xx_h700_defconfig is built with
+# CONFIG_DISTRO_DEFAULTS (no custom installBootLoader needed).
+# U-Boot SPL dd'd at 8 KiB (sector 16), where the Allwinner BROM
+# expects it on H6/H616-family SoCs.
 
 {
   config,
@@ -73,8 +73,8 @@ in
     # systemd-initrd lists efivarfs unconditionally; H700 has no EFI.
     boot.initrd.allowMissingModules = true;
 
-    # Same expand-root fix as rk3326.nix: lsblk PARTN, not minor numbers,
-    # because the roms card (mmcblk1) can perturb minor ordering on boot.
+    # Use lsblk PARTN rather than minor numbers — the roms card
+    # (mmcblk1) can perturb minor ordering on boot.
     # See https://github.com/NixOS/nixpkgs/pull/390183.
     systemd.services.expand-root-partition.script = lib.mkForce ''
       rootPart=$(${lib.getExe' pkgs.util-linux "findmnt"} -n -o SOURCE /)
