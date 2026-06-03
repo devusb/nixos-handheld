@@ -52,7 +52,7 @@ in
     };
     user = lib.mkOption {
       type = lib.types.str;
-      default = "gamer";
+      default = config.handheld.user.name;
       description = "User account to run RetroArch as.";
     };
   };
@@ -66,16 +66,6 @@ in
       );
     }
     (lib.mkIf cfg.enable {
-      users.users.${cfg.user} = {
-        isNormalUser = true;
-        uid = 1000;
-        extraGroups = [
-          "input"
-          "video"
-          "audio"
-        ];
-      };
-
       systemd.services.retroarch = {
         description = "RetroArch";
         wantedBy = [ "multi-user.target" ];
