@@ -35,6 +35,20 @@ let
     sleep 0.5
     exec ${config.handheld.emulationstation.execScript}
   '';
+
+  # RA's set_fullscreen deadlocks under cage; pin a viewport instead.
+  # glcore presents cleanly; other drivers fight cage for DRM.
+  cageRetroarchOverrides = {
+    video_driver = lib.mkForce "glcore";
+    video_fullscreen = "false";
+    video_allow_rotate = "true";
+    video_force_aspect = "true";
+    aspect_ratio_index = "23";
+    custom_viewport_width = "640";
+    custom_viewport_height = "480";
+    custom_viewport_x = "0";
+    custom_viewport_y = "0";
+  };
 in
 {
   options.handheld.compositor = {
@@ -140,39 +154,15 @@ in
 
         Restart = "on-failure";
         RestartSec = "2s";
-        # Cap restart-loop so a permanently-broken cage doesn't pin a CPU
-        # forever — 5 attempts in 60 s, then systemd gives up so the
-        # user can SSH in to investigate.
-        StartLimitBurst = 5;
         StartLimitIntervalSec = 60;
 
         ExecStart = "${lib.getExe cfg.package} -s -- ${sessionScript}";
       };
     };
 
-    # Under cage, RetroArch routes through SDL2 (linked to SDL2_classic
-    # with Wayland backend — see pkgs/retroarch). RA's `gl` and `glcore`
-    # drivers grab DRM master directly, fighting cage. RA's `vulkan`
-    # driver is similar. The `wayland` driver does NOT exist in RA 1.22.2
-    # — `--features` lists Wayland as a video context, not a driver. So
-    # sdl2 is the only sane choice and SDL2 picks Wayland at runtime via
-    # WAYLAND_DISPLAY.
-    #
-    # Wrap the override in mkDefault to match the priority of ES/RA's
-    # full settings defaults. Without this, NixOS attrsOf merge picks the
-    # higher-priority whole-attrset definition (the compositor's), wiping
-    # every other setting. The inner mkForce still pins video_driver.
-    #
-    # `glcore` (GLES3) uses EGL on wl_egl_window — the cleanest Wayland
-    # presentation path. `sdl2` works for the menu but seems to drop frames
-    # when a libretro core takes over presentation (likely surface-recreate
-    # race under wlroots). `glcore` doesn't need DRM master so it doesn't
-    # fight cage.
-    handheld.retroarch.settings = lib.mkDefault {
-      video_driver = lib.mkForce "glcore";
-    };
-    handheld.emulationstation.retroarchSettings = lib.mkDefault {
-      video_driver = lib.mkForce "glcore";
-    };
+    # mkDefault so attrsOf merges with the shared RA settings instead
+    # of overriding the whole attrset at normal priority.
+    handheld.retroarch.settings = lib.mkDefault cageRetroarchOverrides;
+    handheld.emulationstation.retroarchSettings = lib.mkDefault cageRetroarchOverrides;
   };
 }
