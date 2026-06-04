@@ -72,12 +72,23 @@
 
   hardware.enableRedistributableFirmware = true;
 
-  # sunxi-mmc on H700 doesn't survive an s2idle cycle: every wake hits
-  # `fatal err update clk timeout` on mmc1, the driver detaches the
-  # card, and the /roms mount goes I/O-error. Bouncing the automount
-  # on resume gets the kernel to rescan the slot and re-establish the
-  # mount cleanly. Not a root-cause fix; underlying driver bug remains.
+  # mmc1 wedges across some s2idle resumes. Poll for mmcblk1 to
+  # disappear (kernel takes ~3s to give up), then rebind sunxi-mmc
+  # to re-run the full probe path the runtime_resume call skips.
+  # See docs/sunxi-mmc-s2idle-patch.md.
   powerManagement.resumeCommands = ''
+    for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 12); do
+      [ -b /dev/mmcblk1 ] || break
+      sleep 0.5
+    done
+    if [ ! -b /dev/mmcblk1 ]; then
+      echo 4022000.mmc > /sys/bus/platform/drivers/sunxi-mmc/unbind 2>/dev/null || true
+      echo 4022000.mmc > /sys/bus/platform/drivers/sunxi-mmc/bind 2>/dev/null || true
+      for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 20); do
+        [ -b /dev/mmcblk1 ] && break
+        sleep 0.2
+      done
+    fi
     ${lib.getExe' pkgs.systemd "systemctl"} restart roms.automount 2>/dev/null || true
   '';
 
@@ -119,6 +130,15 @@
   # applied by kanshi inside the cage session.
   handheld.compositor.enable = true;
   handheld.compositor.outputTransform = "90";
+
+  # M button (id 10) opens the RA menu.
+  handheld.emulationstation.retroarchSettings = lib.mkDefault {
+    input_menu_toggle_btn = lib.mkForce "10";
+    input_menu_toggle_gamepad_combo = lib.mkForce "0";
+  };
+
+  # DraStic saves + states on the ROMs card so they survive reflash.
+  handheld.emulationstation.drastic.persistDirectory = "/roms/saves/drastic";
 
   # H700 Gamepad — pure-digital pad (no analog sticks).
   # Vid 0x484b, pid 0x14df, version 0x0100, bustype 0x0019.
