@@ -163,6 +163,16 @@ in
       type = lib.types.path;
       description = "DraStic configuration file (button mappings and emulation settings).";
     };
+    drastic.persistDirectory = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/roms/saves/drastic";
+      description = ''
+        If set, redirect DraStic's `backup/` (.dsv saves) and
+        `savestates/` (.dss states) here via symlinks, with the
+        target subdirs auto-created at boot.
+      '';
+    };
     configDirectory = lib.mkOption {
       type = lib.types.str;
       default = "/var/lib/emulationstation/.emulationstation";
@@ -298,8 +308,10 @@ in
     };
 
     # Read-only data from the package is symlinked into the writable state
-    # dir so DraStic finds it in cwd at runtime.
-    systemd.tmpfiles.settings."11-emulationstation-drastic" = lib.mkIf cfg.drastic.enable {
+    # dir so DraStic finds it in cwd at runtime. When persistDirectory is
+    # set, backup/ and savestates/ are redirected via L+ symlinks.
+    systemd.tmpfiles.settings."11-emulationstation-drastic" = lib.mkIf cfg.drastic.enable (
+      {
       "${cfg.drastic.stateDirectory}" = {
         d = {
           user = cfg.user;
@@ -371,6 +383,27 @@ in
         "L+" = {
           argument = "${cfg.drastic.configFile}";
         };
+      };
+      }
+      // lib.optionalAttrs (cfg.drastic.persistDirectory != null) {
+        "${cfg.drastic.stateDirectory}/backup" = {
+          "L+".argument = "${cfg.drastic.persistDirectory}/backup";
+        };
+        "${cfg.drastic.stateDirectory}/savestates" = {
+          "L+".argument = "${cfg.drastic.persistDirectory}/savestates";
+        };
+      }
+    );
+
+    # mkdir the persist target subdirs once the mount is up.
+    systemd.services.drastic-persist-bootstrap = lib.mkIf (cfg.drastic.enable && cfg.drastic.persistDirectory != null) {
+      description = "Ensure DraStic persist subdirectories exist";
+      wantedBy = [ "multi-user.target" ];
+      unitConfig.RequiresMountsFor = cfg.drastic.persistDirectory;
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${lib.getExe' pkgs.coreutils "mkdir"} -p ${cfg.drastic.persistDirectory}/backup ${cfg.drastic.persistDirectory}/savestates";
       };
     };
 
