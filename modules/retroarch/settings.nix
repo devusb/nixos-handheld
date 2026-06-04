@@ -24,23 +24,7 @@
   menu_show_shutdown = "true";
   menu_show_reboot = "true";
 
-  # Video — RA's own set_fullscreen call deadlocks the render thread on
-  # cage; instead we use a custom viewport that fills the compositor's
-  # logical surface. RA's `aspect_ratio_index = 23` (Custom) + the
-  # custom_viewport_* values below tell the glcore driver to render the
-  # core's output at 0,0 sized to 640x480 — which matches cage's
-  # post-kanshi-transform surface size. Without this, RA falls back to
-  # its scale-based windowed size (240×160 × scale=2 ≈ 480×320) and
-  # leaves the rest of the surface unused, manifesting as a small
-  # picture in a corner.
-  video_fullscreen = "false";
-  video_allow_rotate = "true";
-  video_force_aspect = "true";
-  aspect_ratio_index = "23";
-  custom_viewport_width = "640";
-  custom_viewport_height = "480";
-  custom_viewport_x = "0";
-  custom_viewport_y = "0";
+  # Video — 2x scale fits 640x480 (320x240 core * 2)
   video_scale = "2";
   video_vsync = "false";
   video_smooth = "false";
@@ -61,11 +45,9 @@
   input_player1_analog_dpad_mode = "1";
   input_analog_sensitivity = "1.0";
 
-  # Hotkeys — M button (BTN_MODE = button 10 on H700, sometimes labeled
-  # Home on similar pads) opens the RetroArch menu. Disable the legacy
-  # Start+Select combo since the dedicated button is unambiguous.
-  input_menu_toggle_btn = "10";
-  input_menu_toggle_gamepad_combo = "0";
+  # Hotkeys
+  input_menu_toggle_btn = "nul";
+  input_menu_toggle_gamepad_combo = "3";
   input_exit_emulator_btn = "nul";
   menu_swap_ok_cancel_buttons = "false";
 
@@ -80,13 +62,4 @@
 
   # Pin to stable symlink so retroarch.cfg can't cache a stale nix store path
   libretro_directory = "/run/retroarch/cores";
-
-  # Log to file so we can see RA stderr after ES `system()`s a launch
-  # (cage's stdout/stderr capture isn't reliable across the ES → fork
-  # boundary). /tmp is tmpfs — log resets on reboot, which is fine.
-  log_to_file = "true";
-  log_to_file_timestamp = "false";
-  log_dir = "/tmp";
-  log_verbosity = "1";
-  frontend_log_level = "0";
 }
