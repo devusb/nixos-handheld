@@ -93,6 +93,10 @@ in
 
     services.udev.extraRules = ''
       SUBSYSTEM=="sound", KERNEL=="controlC[0-9]*", ACTION=="add", RUN+="${codecInitScript} %n"
+
+      # Pin mmc1 runtime PM "on" — autosuspend triggers the same
+      # sunxi_mmc_oclk_onoff timeout we hit on s2idle resume.
+      SUBSYSTEM=="platform", KERNEL=="4022000.mmc", ACTION=="add", ATTR{power/control}="on"
     '';
 
     sdImage = {
