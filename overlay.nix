@@ -22,7 +22,7 @@ final: prev: {
     parallel-n64 = final.callPackage ./pkgs/parallel-n64 { libretro = prev.libretro; };
     ppsspp = final.callPackage ./pkgs/ppsspp { libretro = prev.libretro; };
     mupen64plus = final.callPackage ./pkgs/mupen64plus { libretro = prev.libretro; };
-    flycast = final.callPackage ./pkgs/flycast { libretro = prev.libretro; };
+    flycast2021 = final.callPackage ./pkgs/flycast2021 { };
     scummvm = final.callPackage ./pkgs/scummvm { libretro = prev.libretro; };
   };
 

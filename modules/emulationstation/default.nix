@@ -209,7 +209,7 @@ in
           dreamcast = {
             fullname = "Sega Dreamcast";
             extensions = ".chd .cdi .gdi";
-            retroarchCore = pkgs.libretro.flycast;
+            retroarchCore = pkgs.libretro.flycast2021;
           };
         }
       '';

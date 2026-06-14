@@ -80,7 +80,7 @@ let
     dreamcast = {
       fullname = "Sega Dreamcast";
       extensions = ".chd .cdi .gdi .CHD .CDI .GDI .zip .ZIP .7z";
-      retroarchCore = libretro.flycast;
+      retroarchCore = libretro.flycast2021;
     };
     psp = {
       fullname = "PlayStation Portable";
