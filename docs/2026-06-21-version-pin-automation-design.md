@@ -81,11 +81,11 @@ allowlist therefore targets `legacyPackages` attrs explicitly.
 | `flycast2021` (main src) | fetchFromGitHub (branch) | `0-unstable-2025-01-16` | scripted | `nix-update --version=branch` |
 | `emulationstation-fcamod` | fetchFromGitHub (351v) | `0-unstable-2026-04-07` | scripted | `nix-update --version=branch=351v` |
 | `gptokeyb2` | fetchFromGitHub (branch) | `0.2.0-unstable-2025-09-22` | scripted | `nix-update --version=branch` |
-| `mali-kbase` | fetchFromGitHub (branch) | `0-unstable-2026-04-06` | scripted | `nix-update --version=branch` |
 | `es-theme-gbz35-mod` | fetchFromGitHub (rev, no `version`) | `4605d68` | scripted | add `version` attr; `--version=branch` |
-| `libmali` | fetchFromGitHub (tag) | `g13p0` | scripted | `nix-update --version-regex 'g([0-9]+p[0-9]+)'` |
 | `SDL2_classic` | fetchFromGitHub (tag) | `release-2.32.6` | scripted | `nix-update --version-regex 'release-2\.(.*)'` (stays on 2.x; never SDL3) |
 | `linux-h700` | fetchurl kernel + fetchFromGitHub sparseCheckout | `7.0.11` + rev `2b61fed` | custom | `pkgs/linux-h700/update.sh` (parses `package.mk`) |
+| `libmali` | fetchFromGitHub (tag) | `g13p0` | manual | ROCKNIX-tracked; kept manual for now |
+| `mali-kbase` | fetchFromGitHub (branch) | `0-unstable-2026-04-06` | manual | ROCKNIX-tracked; kept manual for now |
 | `drastic` | fetchurl raw URL w/ embedded commit | `2.5.0.4` | manual | inventory note (no version source) |
 | `freeimage` | fetchsvn | rev `1911` | manual | inventory note (nix-update has no SVN) |
 | `u-boot-rg28xx-rocknix` | local blob | ROCKNIX image extract | manual | inventory note |
@@ -117,7 +117,8 @@ writing, so the script is testable locally.
 
 ## CI wiring
 
-New `.github/workflows/update-packages.yml`, scheduled (offset from the 2am
+A new inline `.github/workflows/update-packages.yml` (self-contained in this
+repo, not the shared `devusb/nix-update-action`), scheduled (offset from the 2am
 `update-flake-lock` job), reusing the `GH_TOKEN_FOR_UPDATES` secret. A single
 job that, for each allowlisted attr, runs
 `nix-update --flake --use-update-script --commit legacyPackages.aarch64-linux.<attr>`,
@@ -153,8 +154,9 @@ update job before the PR is even opened.
 
 1. Write `docs/version-pins.md` (the inventory); refresh the stale
    `pkgs/kernel-rk3326` reference in `docs/external-dependencies.md`.
-2. Add `passthru.updateScript` to the seven scripted packages; add a `version`
-   attr to `es-theme-gbz35-mod`.
+2. Add `passthru.updateScript` to the five scripted packages (`flycast2021`,
+   `emulationstation-fcamod`, `gptokeyb2`, `es-theme-gbz35-mod`, `SDL2_classic`);
+   add a `version` attr to `es-theme-gbz35-mod`.
 3. Write `pkgs/linux-h700/update.sh` with the `package.mk` parse + patch-drift
    check + `--dry-run`; wire as `linux-h700`'s `passthru.updateScript`.
 4. Add `.github/workflows/update-packages.yml`.
@@ -164,14 +166,17 @@ update job before the PR is even opened.
 
 ## Open questions
 
-- **CI shape**: inline workflow in this repo (self-contained) vs extending
-  `devusb/nix-update-action` to pass `--use-update-script` and accept a
-  `legacyPackages` allowlist. Inline is recommended unless we want to upstream
-  the change into the shared action.
 - **`--use-update-script` + `--flake` + `<nixpkgs>`**: confirm at implementation
   that the script resolution finds nixpkgs in the Action environment.
 - **`es-theme-gbz35-mod` version attr**: confirm `nix-update` writes the new
   `0-unstable-DATE` correctly once a `version` attribute exists.
-- **`libmali` / `mali-kbase`**: these track ROCKNIX repos; confirm the
-  branch/regex choice matches how upstream tags/branches them before enabling
-  auto-bump.
+
+## Decisions
+
+- **CI shape**: inline workflow in this repo (not the shared
+  `devusb/nix-update-action`).
+- **`libmali` / `mali-kbase`**: kept in the manual tier for now; revisit
+  auto-bumping these ROCKNIX-tracked libs as a follow-up.
+- **Commit structure**: one foundational commit (inventory doc + workflow +
+  `external-dependencies.md` refresh), then one commit per package, testing each
+  as we go.
