@@ -3,6 +3,7 @@
   stdenv,
   fetchFromGitHub,
   fetchpatch,
+  nix-update-script,
   libGL,
   zlib,
 }:
@@ -67,6 +68,12 @@ stdenv.mkDerivation {
     core = "flycast2021";
     # Cores dir within the package, read by retroarch-bare.wrapper.
     libretroCore = "/lib/retroarch/cores";
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--flake"
+        "--version=branch"
+      ];
+    };
   };
 
   meta = {
