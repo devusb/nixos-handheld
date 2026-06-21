@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  nix-update-script,
   cmake,
   SDL2,
   libevdev,
@@ -41,6 +42,13 @@ stdenv.mkDerivation (finalAttrs: {
     ln -s gptokeyb2 $out/bin/gptokeyb
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--version=branch"
+    ];
+  };
 
   meta = {
     description = "Game controller to keyboard/mouse mapper for PortMaster ports";
