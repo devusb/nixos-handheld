@@ -110,6 +110,19 @@ in
           pkgs.evtest
         ];
         script = ''
+          # A freshly-flashed image hasn't run activation yet, so the system
+          # profile the reset below points at doesn't exist and /init would
+          # dangle. Seed it from the image's toplevel-form /init on first boot.
+          if [ ! -e /sysroot/nix/var/nix/profiles/system ]; then
+            default=$(readlink /sysroot/init)
+            case $default in
+              /nix/store/*)
+                mkdir -p /sysroot/nix/var/nix/profiles
+                ln -sfn "$(dirname "$default")" /sysroot/nix/var/nix/profiles/system
+                ;;
+            esac
+          fi
+
           # Reset to the default driver so the previous boot's choice doesn't
           # stick. /nix/var/nix/profiles/system is the runtime symlink
           # installBootLoader keeps pointed at the active toplevel.
