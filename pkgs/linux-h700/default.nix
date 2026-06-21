@@ -1,7 +1,7 @@
 {
   lib,
   fetchFromGitHub,
-  linuxPackages_latest,
+  fetchurl,
   linuxManualConfig,
   stdenv,
   flex,
@@ -12,15 +12,24 @@
   ...
 }:
 let
-  inherit (linuxPackages_latest.kernel) src version modDirVersion;
+  # Kernel version pinned to match the ROCKNIX patch rev below — their
+  # patches target this exact tree, so the two move as a pair. Fetched
+  # directly rather than via a nixpkgs kernel attr so an EOL series being
+  # dropped from nixpkgs can't break the build.
+  version = "7.0.11";
+  modDirVersion = "7.0.11";
+  src = fetchurl {
+    url = "mirror://kernel/linux/kernel/v7.x/linux-${version}.tar.xz";
+    hash = "sha256-5WyDVt2gETamBBxu+DK9Dsmb0tNd/5eDKqXsEO0BQwQ=";
+  };
 
   # ROCKNIX H700 kernel patch series.
   rocknixPatches = fetchFromGitHub {
     owner = "ROCKNIX";
     repo = "distribution";
-    rev = "e7b9e9a30440bf6a7eb41dc229a43f4f4a6d4371";
+    rev = "2b61fed6221ba5a004ee9854cfe80a19f127bacd";
     sparseCheckout = [ "projects/ROCKNIX/devices/H700/patches/linux" ];
-    hash = "sha256-XXaEd617pSl4zBzFIU4f3QrM1/nkA7b/DzK5bZTv398=";
+    hash = "sha256-SQd1zOI2YRS/6haW54wLsZsUndK/gGK3LfcfgZgt3Pg=";
   };
 
   # Applied wholesale. DTS-only patches are redundant at runtime
