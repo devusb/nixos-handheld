@@ -7,9 +7,11 @@ imported blobs/patches.
 
 ## Scripted tier — auto-bumped via nix-update
 
-Each package has a `passthru.updateScript`. The scheduled workflow runs
-`nix-update --flake --use-update-script --commit legacyPackages.aarch64-linux.<attr>`
-and opens one combined PR; buildbot-nix builds it on aarch64.
+Each fetch-based package has a `passthru.updateScript`. The scheduled workflow
+runs `nix-update --flake --use-update-script --commit legacyPackages.x86_64-linux.<attr>`
+(x86_64 so the tooling runs natively on the GitHub runner; the flake exposes
+both aarch64 and x86_64 `legacyPackages`) and opens one combined PR; buildbot-nix
+builds it on aarch64.
 
 | Package | File | Upstream | Tracks | updateScript flags |
 |---|---|---|---|---|
@@ -18,16 +20,21 @@ and opens one combined PR; buildbot-nix builds it on aarch64.
 | `gptokeyb2` | `pkgs/gptokeyb2/default.nix` | PortsMaster/gptokeyb2 | branch HEAD | `--version=branch` |
 | `es-theme-gbz35-mod` | `pkgs/es-theme-gbz35-mod/default.nix` | Jetup13/es-theme-gbz35_mod | branch HEAD | custom script (bare fetch, no `src` for nix-update) |
 | `SDL2_classic` | `pkgs/SDL2_classic/default.nix` | libsdl-org/SDL | 2.x release tags | `--version-regex 'release-2\.(.*)'` |
-| `linux-h700` | `pkgs/linux-h700/default.nix` | ROCKNIX/distribution + kernel.org | ROCKNIX rev; kernel version from `package.mk` | custom `update.sh` |
 
-### linux-h700 coupling
+### linux-h700 — coupled, updated by its own script
+
+`linux-h700` is an aarch64-only kernel; its real sources (the kernel tarball via
+`fetchurl` and the ROCKNIX rev via `fetchFromGitHub`) are nested fetchers, not
+the package `src`, so nix-update can't drive it. The workflow runs
+`pkgs/linux-h700/update.sh` directly instead.
 
 The kernel version and the ROCKNIX patch rev are a matched pair: ROCKNIX's
 `projects/ROCKNIX/packages/linux/package.mk` H700 case dictates the kernel
-version. `pkgs/linux-h700/update.sh` bumps the ROCKNIX rev, parses `package.mk`
+version. `update.sh` resolves the latest ROCKNIX `next` rev, parses `package.mk`
 for the H700 `PKG_VERSION`, recomputes the kernel tarball hash and the
-sparseCheckout hash, rewrites all four values, and fails loudly if upstream
-added/removed patch files versus the hand-maintained `patches` array.
+sparseCheckout hash, rewrites all four values, and hard-fails if a patch the
+build applies has disappeared upstream (a curated subset of the upstream patch
+dir is applied; upstream additions are reported, not fatal).
 
 ## Manual tier — bump by hand
 
