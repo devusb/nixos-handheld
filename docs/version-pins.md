@@ -16,7 +16,7 @@ and opens one combined PR; buildbot-nix builds it on aarch64.
 | `libretro.flycast2021` | `pkgs/flycast2021/default.nix` | metallic77/flycast | branch HEAD (`0-unstable-DATE`) | `--version=branch` |
 | `emulationstation-fcamod` | `pkgs/emulationstation-fcamod/default.nix` | christianhaitian/EmulationStation-fcamod | `351v` branch HEAD | `--version=branch=351v` |
 | `gptokeyb2` | `pkgs/gptokeyb2/default.nix` | PortsMaster/gptokeyb2 | branch HEAD | `--version=branch` |
-| `es-theme-gbz35-mod` | `pkgs/es-theme-gbz35-mod/default.nix` | Jetup13/es-theme-gbz35_mod | branch HEAD | `--version=branch` |
+| `es-theme-gbz35-mod` | `pkgs/es-theme-gbz35-mod/default.nix` | Jetup13/es-theme-gbz35_mod | branch HEAD | custom script (bare fetch, no `src` for nix-update) |
 | `SDL2_classic` | `pkgs/SDL2_classic/default.nix` | libsdl-org/SDL | 2.x release tags | `--version-regex 'release-2\.(.*)'` |
 | `linux-h700` | `pkgs/linux-h700/default.nix` | ROCKNIX/distribution + kernel.org | ROCKNIX rev; kernel version from `package.mk` | custom `update.sh` |
 
