@@ -9,6 +9,14 @@
   perl,
   runCommand,
   rg28xx-panel-firmware,
+  writeShellApplication,
+  git,
+  curl,
+  gnused,
+  gnugrep,
+  gawk,
+  coreutils,
+  nix,
   ...
 }:
 let
@@ -100,6 +108,22 @@ let
         make h700_defconfig
         cp .config $out
       '';
+
+  # Bumps the ROCKNIX rev and the coupled kernel version+hash together,
+  # deriving the kernel version from ROCKNIX's package.mk H700 case.
+  updateScript = writeShellApplication {
+    name = "update-linux-h700";
+    runtimeInputs = [
+      git
+      curl
+      gnused
+      gnugrep
+      gawk
+      coreutils
+      nix
+    ];
+    text = builtins.readFile ./update.sh;
+  };
 in
 (linuxManualConfig {
   src = patchedSrc;
@@ -114,5 +138,6 @@ in
   (old: {
     passthru = (old.passthru or { }) // {
       features = { };
+      updateScript = [ (lib.getExe updateScript) ];
     };
   })
