@@ -2,6 +2,7 @@
   writeShellScriptBin,
   writeText,
   portmaster-fhs,
+  util-linux,
 }:
 
 let
@@ -53,5 +54,9 @@ writeShellScriptBin "portmaster-launch" ''
     exit 1
   fi
 
-  exec ${portmaster-fhs}/bin/portmaster-run -c "BASH_ENV=${bashEnv} bash \"\$0\"" "$SCRIPT"
+  # A compositor session hands every child its ambient caps; bwrap aborts
+  # ("Unexpected capabilities but not setuid") if it inherits any. Drop the
+  # ambient set before entering the sandbox — a no-op when it's empty.
+  exec ${util-linux}/bin/setpriv --ambient-caps=-all \
+    ${portmaster-fhs}/bin/portmaster-run -c "BASH_ENV=${bashEnv} bash \"\$0\"" "$SCRIPT"
 ''

@@ -32,8 +32,18 @@ in
           KERNEL=="uinput", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput"
         '';
       }
+      # Ports exec `portmaster-launch` from ES's child shell, so the
+      # launcher must be on the PATH of the unit that runs ES — which
+      # is emulationstation.service normally, but handheld-session.service
+      # (cage) when the compositor owns the display.
       (lib.mkIf config.handheld.emulationstation.enable {
         systemd.services.emulationstation.path = [
+          cfg.package
+          cfg.launchPackage
+        ];
+      })
+      (lib.mkIf (config.handheld.emulationstation.enable && config.handheld.compositor.enable) {
+        systemd.services.handheld-session.path = [
           cfg.package
           cfg.launchPackage
         ];
