@@ -6,6 +6,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  nix-update-script,
   pkg-config,
   alsa-lib,
   libdrm,
@@ -117,6 +118,15 @@ stdenv.mkDerivation (finalAttrs: {
     '';
 
   setupHook = ./setup-hook.sh;
+
+  # Constrained to the 2.x release series — never SDL3.
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--version-regex"
+      "release-2\\.(.*)"
+    ];
+  };
 
   meta = {
     description = "Native SDL2 (not sdl2-compat) with KMSDRM + Wayland support";
