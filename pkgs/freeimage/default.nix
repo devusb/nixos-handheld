@@ -68,6 +68,12 @@ stdenv.mkDerivation (finalAttrs: {
     # Remove JPEGTransform (depends on IJG libjpeg transupp internals, not in libjpeg-turbo)
     sed -i 's|[^ ]*JPEGTransform[^ ]*||g' Makefile.gnu Makefile.fip Makefile.srcs fipMakefile.srcs
     rm -f Source/FreeImageToolkit/JPEGTransform.cpp
+
+    # Disable G3 plugin — reads tif_row, moved into TIFFDirectory in libtiff 4.7.2
+    # ES-fcamod doesn't need raw CCITT G.3 fax support
+    rm -f Source/FreeImage/PluginG3.cpp
+    sed -i 's|[^ ]*PluginG3[^ ]*||g' Makefile.gnu Makefile.fip Makefile.srcs fipMakefile.srcs
+    sed -i 's|s_plugins->AddNode(InitG3);|// G3 disabled|' Source/FreeImage/Plugin.cpp
   '';
 
   nativeBuildInputs = [ pkg-config ];
