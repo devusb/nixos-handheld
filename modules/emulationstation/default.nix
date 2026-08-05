@@ -407,6 +407,12 @@ in
       };
     };
 
+    # tty1 belongs to the display session, whether that's cage or ES on bare
+    # DRM. getty.target wants autovt@tty1 by name, so masking that name is
+    # what keeps a login prompt off the panel; it also stops a nixos-rebuild
+    # switch from reactivating getty underneath a running session.
+    systemd.services."autovt@tty1".enable = false;
+
     # EmulationStation as systemd service — direct DRM/KMS, no compositor.
     # When handheld.compositor.enable is true, cage owns the display session
     # and runs the same execScript itself; we drop this unit to avoid two
