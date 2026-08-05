@@ -84,10 +84,13 @@ in
     systemd.services.handheld-session = {
       description = "Handheld display session (cage + emulationstation)";
       wantedBy = [ "multi-user.target" ];
+      # Take tty1 from getty at start so cage owns the VT instead of racing it.
+      conflicts = [ "getty@tty1.service" ];
       after = [
         "systemd-udev-settle.service"
         "pipewire.service"
         "wireplumber.service"
+        "getty@tty1.service"
       ];
       requires = [
         "pipewire.service"
