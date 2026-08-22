@@ -54,7 +54,25 @@ cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies
 cat /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq
 ```
 
-The 1512 MHz OPP is marked `turbo-mode`; `cpufreq-dt` exposes it through `/sys/devices/system/cpu/cpufreq/boost`.
+The 1512 MHz OPP is marked `turbo-mode`, so `cpufreq-dt` withholds it from the normal range and exposes it behind a switch that defaults off:
+
+```bash
+cat /sys/devices/system/cpu/cpufreq/boost                              # 0
+cat /sys/devices/system/cpu/cpufreq/policy0/scaling_boost_frequencies  # 1512000
+echo 1 > /sys/devices/system/cpu/cpufreq/boost                         # raise the ceiling
+```
+
+Enabling it adds 6.8% of clock and moves the CPU rail from 1.10 V to 1.16 V, the regulator's declared maximum. Power scales roughly with V²·f, so the cost is near 19% for that 6.8%, and under the `performance` governor the turbo OPP is then held continuously rather than intermittently.
+
+It only pays off where a single saturated thread is the limit. Dreamcast under flycast pins one core at 100% with the GPU idling at its 420 MHz floor, so clock is the only lever. It does nothing for GPU-bound titles: N64 under GLideN64 holds the 648 MHz GPU ceiling with most of the CPU idle.
+
+Thermal throttling depends on the `cooling-maps` added in `pkgs/h700-dtb`. sun50i-h616.dtsi declares the cpu-thermal passive trips (60 C and 70 C) but binds no cooling device to them, so without the map the 110 C critical trip — a shutdown, not a throttle — is the only thermal response. The map attaches all four CPUs to both passive trips for the `step_wise` governor to act on.
+
+```bash
+cat /sys/class/thermal/thermal_zone2/type       # cpu-thermal
+cat /sys/class/thermal/thermal_zone2/cdev0/type # cpufreq-cpu0
+cat /sys/class/thermal/thermal_zone2/cdev0/cur_state
+```
 
 ## Performance tuning
 
