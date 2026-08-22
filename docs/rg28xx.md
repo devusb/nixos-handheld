@@ -56,6 +56,51 @@ cat /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq
 
 The 1512 MHz OPP is marked `turbo-mode`; `cpufreq-dt` exposes it through `/sys/devices/system/cpu/cpufreq/boost`.
 
+## Performance tuning
+
+The CPU tops out at 1416 MHz (1512 with boost) and the Mali-G31 at 648 MHz. Titles are limited by one or the other, and the two cases pull in opposite directions, so identify which before changing core options.
+
+```bash
+# GPU: sitting at 648 MHz every sample means GPU-bound; ranging across the
+# curve or resting at the 420 MHz floor means it is not.
+for i in $(seq 1 10); do cat /sys/class/devfreq/1800000.gpu/cur_freq; sleep 0.5; done
+cat /sys/class/devfreq/1800000.gpu/trans_stat
+
+# CPU: whole-process busy for the running emulator. Over 100% spans cores;
+# 400% is the ceiling.
+top -b -n 2 -d 3 | head -12
+```
+
+A GPU pinned at 648 MHz alongside idle CPU cores is GPU-bound — reduce GPU work. Busy threads with the GPU at its 420 MHz floor is CPU-bound — move work onto the GPU. cage composites and rotates every frame, so GPU-bound titles pay that pass on top of their own rendering.
+
+Core options live in `/home/gamer/.config/retroarch/config/<Core>/<Core>.opt` and are written when the core unloads. They are not managed by this repo and do not survive a reflash. `Quick Menu -> Core Options` edits them; `Quick Menu -> Controls` writes controller remaps instead.
+
+### PSP (PPSSPP)
+
+With `hardware_tesselation` off, PPSSPP tessellates curves on its CPU thread pool, saturating the `PoolW` workers while the GPU idles. Moving tessellation to hardware and lowering curve quality shifts that work to the idle GPU.
+
+```
+ppsspp_hardware_tesselation = "enabled"
+ppsspp_spline_quality = "Low"
+ppsspp_frame_duplication = "disabled"
+ppsspp_texture_anisotropic_filtering = "disabled"
+ppsspp_backend = "opengl"
+```
+
+### N64 (Mupen64Plus-Next / GLideN64)
+
+`mupen64plus-rdp-plugin` offers `gliden64` and `angrylion` in this build; ParaLLEl-RDP is Vulkan-only and compiled out (`HAVE_PARALLEL_RDP=0`), and Panfrost has no Vulkan driver. GLideN64 is the fast plugin — Angrylion is a software rasterizer. Rice belongs to the separate `parallel-n64` core, which is packaged in `pkgs/parallel-n64` but not wired to the `n64` system.
+
+These cut per-fragment shading and framebuffer readback, the dominant GPU costs:
+
+```
+mupen64plus-EnableLODEmulation = "False"
+mupen64plus-EnableCopyColorToRDRAM = "Off"
+mupen64plus-EnableFBEmulation = "False"
+```
+
+`EnableFBEmulation = "False"` can break framebuffer effects; re-enable it first if a game renders incorrectly. Keep `mupen64plus-EnableCopyDepthToRDRAM = "Software"` — that copy runs on the CPU, which has headroom whenever the GPU is the limit.
+
 ## Quirks & workarounds
 
 - **Audio codec boots muted** — the sun4i / H616 codec starts with `DAC Playback Switch` off. A udev rule on `controlC*` add amixers it on (`socs/h700.nix`); without it, SDL2 audio teardown deadlocks.
