@@ -20,3 +20,31 @@
 &panel {
 	compatible = "anbernic,rg28xx-panel", "panel-mipi-dpi-spi";
 };
+
+/*
+ * sun50i-h616.dtsi declares the cpu-thermal trips but binds no cooling
+ * device to them, so the passive trips are inert and the only thermal
+ * response is the 110C critical shutdown. cpufreq-dt registers a
+ * cpufreq-cpu0 cooling device; map it onto both passive trips so the
+ * step_wise governor can actually throttle. Mirrors the sun50i-h6.dtsi
+ * pattern. All four CPUs share one OPP table (opp-shared).
+ */
+&{/thermal-zones/cpu-thermal} {
+	cooling-maps {
+		map0 {
+			trip = <&cpu_threshold>;
+			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+
+		map1 {
+			trip = <&cpu_target>;
+			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+	};
+};
