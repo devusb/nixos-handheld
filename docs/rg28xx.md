@@ -43,6 +43,19 @@ Uses NixOS's stock `generic-extlinux-compatible` — mainline U-Boot's `anbernic
 
 The kernel is `pkgs/linux-h700` — mainline with the ROCKNIX H700 patch series and a custom `h700_defconfig` (Panfrost, AXP717 PMIC + battery, `panel-mipi-dpi-spi`, sun4i-codec, gpio-keys, USB gadget). The DTB is built standalone (`pkgs/h700-dtb`) from the ROCKNIX-patched `rg35xx-plus` base with the rg28xx panel compatible.
 
+## CPU frequency
+
+The H700 OPP table is `allwinner,sun50i-h616-operating-points`, and `cpufreq-dt-platdev` blocklists `allwinner,sun50i-h700`, so the generic DT driver never registers itself. `CONFIG_ARM_ALLWINNER_SUN50I_CPUFREQ_NVMEM` supplies the driver that reads the speed bin from the SID efuse (`cpu-speed-grade@0`, two bytes at offset 0), applies the matching `opp-supported-hw` mask, and registers `cpufreq-dt`. Without it there is no cpufreq at all and the CPU stays at the 1008 MHz rate U-Boot leaves it at.
+
+The table spans 480–1512 MHz; which entries are usable depends on the bin. `vdd-cpu` is AXP717 `dcdc1` (0.9–1.16 V). The governor is `performance` (`modules/hardware.nix`).
+
+```bash
+cat /sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies
+cat /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq
+```
+
+The 1512 MHz OPP is marked `turbo-mode`; `cpufreq-dt` exposes it through `/sys/devices/system/cpu/cpufreq/boost`.
+
 ## Quirks & workarounds
 
 - **Audio codec boots muted** — the sun4i / H616 codec starts with `DAC Playback Switch` off. A udev rule on `controlC*` add amixers it on (`socs/h700.nix`); without it, SDL2 audio teardown deadlocks.
