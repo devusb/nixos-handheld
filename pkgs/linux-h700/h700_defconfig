@@ -290,9 +290,10 @@ CONFIG_FW_LOADER=y
 CONFIG_EXTRA_FIRMWARE="panels/anbernic,rg28xx-panel.panel"
 CONFIG_EXTRA_FIRMWARE_DIR="external-firmware"
 
-# PWM — sun20i driver is added by one of the kernel patches and
-# drives the H700 backlight.
-CONFIG_PWM_SUN20I=y
+# PWM — pwm-sun8i covers the H616/H700 controller and drives the backlight.
+# ROCKNIX renamed this from PWM_SUN20I when they took the upstream v8 h616
+# PWM patch; an unknown symbol here is silently dropped by make defconfig.
+CONFIG_PWM_SUN8I=y
 
 # Audio — sun4i-codec driver covers the H700's H616-style codec at 0x5096000.
 CONFIG_SOUND=y

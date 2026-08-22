@@ -12,24 +12,29 @@
   ...
 }:
 let
-  # Kernel version pinned to match the ROCKNIX patch rev below — their
-  # patches target this exact tree, so the two move as a pair. Fetched
-  # directly rather than via a nixpkgs kernel attr so an EOL series being
-  # dropped from nixpkgs can't break the build.
-  version = "7.0.11";
-  modDirVersion = "7.0.11";
+  # ROCKNIX targets 7.2 for H700 — see the DEVICE case in their
+  # projects/ROCKNIX/packages/linux/package.mk, which overrides the generic
+  # packages/linux/package.mk. The patch series is written against that tree,
+  # so the two move together. Fetched directly rather than via a nixpkgs
+  # kernel attr so an EOL series being dropped from nixpkgs cannot break the
+  # build.
+  version = "7.2";
+  modDirVersion = "7.2.0";
   src = fetchurl {
     url = "mirror://kernel/linux/kernel/v7.x/linux-${version}.tar.xz";
-    hash = "sha256-5WyDVt2gETamBBxu+DK9Dsmb0tNd/5eDKqXsEO0BQwQ=";
+    hash = "sha256-+f7z0UwN9TgZAm9L50RZg1wqCw3L9bW72eoZ8IKUArM=";
   };
 
-  # ROCKNIX H700 kernel patch series.
+  # ROCKNIX H700 kernel patch series. Pinned to a master rev rather than a
+  # release tag: their tags are monthly snapshots that lag the kernel bumps,
+  # and the tag current at time of writing (20260801) still targets 6.15.6,
+  # whose panel patch does not apply to 7.1.x.
   rocknixPatches = fetchFromGitHub {
     owner = "ROCKNIX";
     repo = "distribution";
-    rev = "2b61fed6221ba5a004ee9854cfe80a19f127bacd";
+    rev = "5feac0f44de9789e862b6cf2c33741d58eada11b";
     sparseCheckout = [ "projects/ROCKNIX/devices/H700/patches/linux" ];
-    hash = "sha256-SQd1zOI2YRS/6haW54wLsZsUndK/gGK3LfcfgZgt3Pg=";
+    hash = "sha256-uwvH75OFu+RDDiur3UjtIjMn1Xr9rhb323g830fml1I=";
   };
 
   # Applied wholesale. DTS-only patches are redundant at runtime
@@ -40,8 +45,7 @@ let
     "0002-rg35xx-enable-HDMI-LCD.patch"
     "0003-Update-sun8i_tcon_top.c.patch"
     "0007-rg35xx-add-GPU-opp.patch"
-    "0008-sun20i-add-pwm-driver.patch"
-    "0009-h616-add-pwm-node.patch"
+    "0008-v8_20260804_james_hilliard1_introduce_allwinner_h616_pwm_controller.patch"
     "0010-rg35xx-enable-pwm-backlight.patch"
     "0040-Revert-usb-musb-Fix-hardware-lockup-on-first-Rx-endp.patch"
     "0110-v2_20250226_kikuchan98_drm_panel_add_generic_mipi_panel_driver.patch"
@@ -50,6 +54,7 @@ let
     "0126-20241018_macroalpha82_rg35xx_add_additional_hardware_support.patch"
     "0127-enable-mmc1-for-RG35XX-2024.patch"
     "0140-rg35xx-2024-use-rocknix-joypad-driver.patch"
+    "0144-Update-sun50i-h700-anbernic-rg35xx-h.dts.patch"
     "0150-add-forcefeedback.patch"
     "0151-phy-fix-OTG-host-mode.patch"
     "0152-rg35xx-2024-enable-usb-otg.patch"
