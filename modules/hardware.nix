@@ -32,7 +32,7 @@
     systemWide = true;
   };
 
-  powerManagement.cpuFreqGovernor = "ondemand";
+  powerManagement.cpuFreqGovernor = "performance";
 
   nix.registry = lib.mkForce { };
 
