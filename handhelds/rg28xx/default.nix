@@ -128,7 +128,7 @@
   # Prebuilt ports via the bwrap FHS sandbox — runs under panfrost.
   handheld.portmaster.enable = true;
 
-  systemd.services.handheld-session.path = [ pkgs.yodecomp ];
+  systemd.services.handheld-session.path = [ pkgs.yodecomp-full ];
 
   # Wayland kiosk owns the panel — wlroots does not auto-rotate via DRM
   # panel-orientation, so the transform is set explicitly here and
