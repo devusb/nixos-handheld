@@ -18,17 +18,12 @@
       nix-packages,
     }:
     let
-      system = "aarch64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-        overlays = [
-          self.overlays.default
-          nix-packages.overlays.default
-        ];
-      };
-      eachSystem = f: nixpkgs.lib.genAttrs (import systems) (system: f nixpkgs.legacyPackages.${system});
-      treefmtEval = eachSystem (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
+      handheldSystem = "aarch64-linux";
+      forAllSystems = nixpkgs.lib.genAttrs (import systems);
+      pkgs = self.legacyPackages.${handheldSystem};
+      treefmtEval = forAllSystems (
+        system: treefmt-nix.lib.evalModule nixpkgs.legacyPackages.${system} ./treefmt.nix
+      );
     in
     {
       overlays.default = import ./overlay.nix;
@@ -36,7 +31,7 @@
       nixosModules.default = ./modules;
 
       nixosConfigurations.r36h = nixpkgs.lib.nixosSystem {
-        inherit system;
+        system = handheldSystem;
         modules = [
           ./handhelds/r36h
           {
@@ -50,25 +45,35 @@
       };
 
       nixosConfigurations.rg28xx = nixpkgs.lib.nixosSystem {
-        inherit system;
+        system = handheldSystem;
         modules = [
           { nixpkgs.config.allowUnfree = true; }
           ./handhelds/rg28xx
         ];
       };
 
-      legacyPackages.${system} = pkgs;
+      legacyPackages = forAllSystems (
+        system:
+        import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [
+            self.overlays.default
+            nix-packages.overlays.default
+          ];
+        }
+      );
 
-      packages.${system} = {
+      packages.${handheldSystem} = {
         r36h-image = self.nixosConfigurations.r36h.config.system.build.sdImage;
         rg28xx-image = self.nixosConfigurations.rg28xx.config.system.build.sdImage;
       };
 
-      checks.${system} = {
+      checks.${handheldSystem} = {
         nixos-r36h = self.nixosConfigurations.r36h.config.system.build.toplevel;
         nixos-rg28xx = self.nixosConfigurations.rg28xx.config.system.build.toplevel;
       };
 
-      formatter = eachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);
+      formatter = forAllSystems (system: treefmtEval.${system}.config.build.wrapper);
     };
 }

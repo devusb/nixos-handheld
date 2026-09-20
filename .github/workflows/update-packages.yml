@@ -1,0 +1,50 @@
+name: update-packages
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # daily at 3am UTC, after update-flake-lock (2am)
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      # Fetch-based packages: nix-update runs each package's updateScript.
+      # Targets x86_64-linux so the tooling runs natively on the runner.
+      - name: Update fetch-based packages
+        run: |
+          set -uo pipefail
+          attrs="libretro.flycast2021 emulationstation-fcamod gptokeyb2 es-theme-gbz35-mod SDL2_classic"
+          for a in $attrs; do
+            echo "::group::$a"
+            nix run nixpkgs#nix-update -- \
+              --flake --use-update-script --commit \
+              "legacyPackages.x86_64-linux.$a" \
+              || echo "::warning::no update or update failed for $a"
+            echo "::endgroup::"
+          done
+      # linux-h700 is an aarch64-only kernel whose sources are nested fetchers
+      # nix-update can't reach; its self-contained updater handles the coupled
+      # ROCKNIX rev + kernel version. create-pull-request commits the result.
+      - name: Update linux-h700 (coupled ROCKNIX/kernel)
+        run: |
+          set -uo pipefail
+          nix shell \
+            nixpkgs#git nixpkgs#curl nixpkgs#gnused nixpkgs#gnugrep \
+            nixpkgs#gawk nixpkgs#coreutils nixpkgs#nix \
+            --command bash pkgs/linux-h700/update.sh \
+            || echo "::warning::linux-h700 update failed"
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
+          branch: update-packages
+          delete-branch: true
+          title: "Update packages"
+          labels: |
+            dependencies
+            automated
+          body: |
+            Automated package bumps via nix-update. Built by buildbot-nix on aarch64.

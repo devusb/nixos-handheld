@@ -42,29 +42,22 @@ All files in `handhelds/r36h/blobs/` and `handhelds/r36h/firmware/` originate fr
 - **What it does:** Device tree blob used by U-Boot for its own display initialization (splash screen). Referenced by the PanCho.ini panel path system
 - **Note:** Only used by U-Boot, not by Linux
 
-## Kernel DTS Patch
+## Kernel Device Tree
 
-### `0001-add-r36s-device-tree.patch`
+### `rk3326-r36s.dts`
 
-- **Location:** `pkgs/kernel-rk3326/patches/`
+- **Location:** `pkgs/rk3326-dtb/`
 - **Source:** Written by Andre Renaud, included in the [nixos-r36s](https://github.com/icefirex/nixos-r36s) repository
-- **What it does:** Adds `arch/arm64/boot/dts/rockchip/rk3326-r36s.dts` to the kernel source tree. This is a complete 890-line device tree describing the R36S/R36H hardware:
+- **What it does:** A complete device tree (~910 lines) describing the R36S/R36H hardware, compiled standalone with cpp + dtc by the `rk3326-dtb` package (no kernel rebuild on DTS changes):
   - GPIO buttons via mainline `gpio-keys` driver
   - Analog sticks via mainline `adc-joystick` + `gpio-mux` + `io-channel-mux`
   - Display via MIPI DSI with `rocknix,generic-dsi` compatible and `panel_description` init sequence (Panel 4)
   - Audio via RK817 PMIC codec over I2S
   - USB via dwc2 controller
-  - SD card via Designware MMC controller
+  - SD card via Designware MMC controller; the `ff380000` SDIO controller enabled as a second SD slot (R36H has two — NixOS and ROMs)
   - RK817 PMIC regulators, power management, battery
 - **Based on:** Mainline ODROID-GO3 DTS (`rk3326-odroid-go.dtsi`) with R36S-specific GPIO pin mappings, panel init, and analog stick calibration
 - **Why not upstream:** R36S/R36H isn't an officially supported board. Would need kernel mailing list review
-- **Could be replaced:** We understand the hardware well enough to write our own DTS
-
-### `0002-r36h-enable-second-sd-slot.patch`
-
-- **Location:** `pkgs/kernel-rk3326/patches/`
-- **Source:** Written by us
-- **What it does:** Enables the SDIO controller at `ff380000` as a second SD card slot. The R36S DTS disables this because the R36S only has one SD slot. The R36H (landscape variant) has two — one for NixOS, one for ROMs
 
 ## Panel Driver
 

@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  nix-update-script,
   writeShellScript,
   gawk,
   cmake,
@@ -96,6 +97,13 @@ stdenv.mkDerivation {
     cp -r ../resources $out/share/emulationstation/
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--version=branch=351v"
+    ];
+  };
 
   meta = {
     description = "EmulationStation frontend (fcamod fork, 351v branch) for handheld gaming devices";
