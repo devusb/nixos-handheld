@@ -38,6 +38,7 @@
       nixosConfigurations.r36h = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
+          nix-packages.nixosModules.default
           ./handhelds/r36h
           {
             nixpkgs.config.allowUnfree = true;
@@ -53,6 +54,7 @@
         inherit system;
         modules = [
           { nixpkgs.config.allowUnfree = true; }
+          nix-packages.nixosModules.default
           ./handhelds/rg28xx
         ];
       };
