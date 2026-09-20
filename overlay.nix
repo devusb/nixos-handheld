@@ -85,4 +85,6 @@ final: prev: {
   portmaster-launch = final.callPackage ./pkgs/portmaster-launch { };
 
   gptokeyb2 = final.callPackage ./pkgs/gptokeyb2 { };
+
+  yodecomp-full = final.callPackage ./pkgs/yodecomp-full { sdl3 = prev.sdl3; };
 }
