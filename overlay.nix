@@ -12,11 +12,8 @@ final: prev: {
     kernel = final.linux-rk3326;
   };
 
-  # h700-dtb compiles the RG28XX overlay against linux-h700's patched
-  # source so cpp's include path resolves to the ROCKNIX-patched
-  # rg35xx-plus.dts (which gains the spi-gpio + panel + backlight nodes
-  # via patch 0126 et al). Without that, the &panel override doesn't
-  # resolve at DT compile time.
+  # h700-dtb compiles against linux-h700's patched source, which carries
+  # the ROCKNIX H700 device trees.
   h700-dtb = final.callPackage ./pkgs/h700-dtb {
     kernel = final.linux-h700;
   };
