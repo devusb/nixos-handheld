@@ -72,26 +72,6 @@
 
   hardware.enableRedistributableFirmware = true;
 
-  # mmc1 wedges across some s2idle resumes. Poll for mmcblk1 to
-  # disappear (kernel takes ~3s to give up), then rebind sunxi-mmc
-  # to re-run the full probe path the runtime_resume call skips.
-  # See docs/sunxi-mmc-s2idle-patch.md.
-  powerManagement.resumeCommands = ''
-    for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 12); do
-      [ -b /dev/mmcblk1 ] || break
-      sleep 0.5
-    done
-    if [ ! -b /dev/mmcblk1 ]; then
-      echo 4022000.mmc > /sys/bus/platform/drivers/sunxi-mmc/unbind 2>/dev/null || true
-      echo 4022000.mmc > /sys/bus/platform/drivers/sunxi-mmc/bind 2>/dev/null || true
-      for _ in $(${lib.getExe' pkgs.coreutils "seq"} 1 20); do
-        [ -b /dev/mmcblk1 ] && break
-        sleep 0.2
-      done
-    fi
-    ${lib.getExe' pkgs.systemd "systemctl"} restart roms.automount 2>/dev/null || true
-  '';
-
   # Second SD card for ROMs.
   fileSystems."/roms" = {
     device = "/dev/mmcblk1p1";

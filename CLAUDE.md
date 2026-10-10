@@ -28,7 +28,7 @@ Rendering is device-dependent: the R36H renders directly to DRM/KMS on the bare 
 - **Input**: pure-digital `H700 Gamepad` (vid 0x484b, pid 0x14df) — no analog sticks
 - **Audio**: sun4i / H616 codec — boots muted, unmuted by a udev rule
 - **USB**: MUSB controller — gadget by default; host mode not working on mainline (#41)
-- **PMIC**: AXP717; power button suspends via logind (real s2idle — see mmc quirk below)
+- **PMIC**: AXP717; power button suspends via logind (real s2idle)
 
 ## Build commands
 
@@ -218,8 +218,6 @@ RG28XX diverges from the R36H-primary notes above. Full detail in
   the session env; M button bound to menus. No analog sticks.
 - **Audio**: sun4i / H616 codec boots muted; a udev rule amixers it on.
 - **USB**: MUSB, gadget by default; host mode not working on mainline (#41).
-- **mmc quirk**: real s2idle resume can wedge sunxi-mmc; `resumeCommands`
-  rebind recovers it.
 
 ### RetroArch configuration
 
