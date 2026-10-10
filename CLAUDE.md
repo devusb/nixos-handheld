@@ -89,10 +89,10 @@ modules/
   portmaster/         — PortMaster FHS sandbox wiring (handheld.portmaster)
 pkgs/
   linux-rk3326/       — R36H mainline kernel config
-  linux-h700/         — RG28XX kernel; ROCKNIX patch series, version pinned to match the rev
+  linux-h700/         — RG28XX kernel; ROCKNIX patches, device trees and config from one pinned rev
   rk3326-dtb/         — standalone DTS compilation (no kernel rebuild on DTS changes)
     rk3326-r36s.dts   — plain DTS file for R36H/R36S
-  h700-dtb/           — standalone RG28XX DTB (ROCKNIX rg35xx-plus base + rg28xx panel)
+  h700-dtb/           — standalone RG28XX DTB (ROCKNIX rg28xx DTS + local cooling maps)
   rg28xx-panel-firmware/ — RG28XX panel init blob (panel-mipi-dpi-spi)
   u-boot-rg28xx-rocknix/ — prebuilt ROCKNIX SPL+U-Boot blob for H700
   rocknix-joypad/     — ROCKNIX singleadc-joypad out-of-tree kernel module
@@ -209,9 +209,10 @@ RG28XX diverges from the R36H-primary notes above. Full detail in
 - **Boot**: stock `generic-extlinux-compatible` — no custom boot.ini or
   installBootLoader. U-Boot scans `/boot/extlinux/extlinux.conf` and boots a
   store-path `init=`; SPL at 8 KiB.
-- **Kernel**: `pkgs/linux-h700` — self-sourced mainline pinned to match the
-  ROCKNIX H700 patch rev. The kernel version and ROCKNIX rev move as a pair
-  (their `package.mk` H700 case dictates the version). DTB via `pkgs/h700-dtb`.
+- **Kernel**: `pkgs/linux-h700` — mainline built the ROCKNIX way from one
+  pinned ROCKNIX rev: their shared and H700 patch directories, H700 device
+  trees and H700 kernel config (plus `USB_ETH` and our panel firmware). The
+  version comes from their `package.mk` H700 case. DTB via `pkgs/h700-dtb`.
 - **Display**: `panel-mipi-dpi-spi` + `pkgs/rg28xx-panel-firmware` init blob.
 - **Input**: digital `H700 Gamepad`, mapped via `SDL_GAMECONTROLLERCONFIG` in
   the session env; M button bound to menus. No analog sticks.

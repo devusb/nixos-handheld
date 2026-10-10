@@ -41,7 +41,7 @@ Uses NixOS's stock `generic-extlinux-compatible` — mainline U-Boot's `anbernic
 
 ## Input & kernel
 
-The kernel is `pkgs/linux-h700` — mainline with the ROCKNIX H700 patch series and a custom `h700_defconfig` (Panfrost, AXP717 PMIC + battery, `panel-mipi-dpi-spi`, sun4i-codec, gpio-keys, USB gadget). The DTB is built standalone (`pkgs/h700-dtb`) from the ROCKNIX-patched `rg35xx-plus` base with the rg28xx panel compatible.
+The kernel is `pkgs/linux-h700`: mainline built the way ROCKNIX builds its H700 kernel. It applies their shared `mainline` and version patch directories followed by the H700 device patches, copies their H700 device trees into the source tree, and uses their H700 kernel config with `USB_ETH` and our panel firmware layered on top. The kernel version, patches, device trees and config all come from one pinned ROCKNIX rev. The DTB is built standalone (`pkgs/h700-dtb`) from ROCKNIX's `sun50i-h700-anbernic-rg28xx.dts` plus local CPU cooling maps.
 
 ## CPU frequency
 
