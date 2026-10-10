@@ -113,7 +113,7 @@ handhelds/
   rg28xx/             — device-specific: gamepad GUID, panel firmware, ES/DraStic configs
 socs/
   rk3326.nix          — RK3326 SD image: U-Boot blob injection, custom boot loader
-  h700.nix            — H700 SD image: U-Boot SPL offset, extlinux, codec/mmc quirks
+  h700.nix            — H700 SD image: U-Boot SPL offset, extlinux, codec quirk
 ```
 
 ## How things work
@@ -219,7 +219,7 @@ RG28XX diverges from the R36H-primary notes above. Full detail in
 - **Audio**: sun4i / H616 codec boots muted; a udev rule amixers it on.
 - **USB**: MUSB, gadget by default; host mode not working on mainline (#41).
 - **mmc quirk**: real s2idle resume can wedge sunxi-mmc; `resumeCommands`
-  rebind recovers it and mmc1 runtime PM is pinned `on`.
+  rebind recovers it.
 
 ### RetroArch configuration
 
