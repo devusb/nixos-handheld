@@ -9,15 +9,14 @@
   perl,
   runCommand,
   rg28xx-panel-firmware,
+  wireless-regdb,
   ...
 }:
 let
   # ROCKNIX targets 7.2 for H700 — see the DEVICE case in their
-  # projects/ROCKNIX/packages/linux/package.mk, which overrides the generic
-  # packages/linux/package.mk. The patch series is written against that tree,
-  # so the two move together. Fetched directly rather than via a nixpkgs
-  # kernel attr so an EOL series being dropped from nixpkgs cannot break the
-  # build.
+  # projects/ROCKNIX/packages/linux/package.mk. Fetched directly rather than
+  # via a nixpkgs kernel attr so an EOL series being dropped from nixpkgs
+  # cannot break the build.
   version = "7.2";
   modDirVersion = "7.2.0";
   src = fetchurl {
@@ -25,60 +24,63 @@ let
     hash = "sha256-+f7z0UwN9TgZAm9L50RZg1wqCw3L9bW72eoZ8IKUArM=";
   };
 
-  # ROCKNIX H700 kernel patch series. Pinned to a master rev rather than a
-  # release tag: their tags are monthly snapshots that lag the kernel bumps,
-  # and the tag current at time of writing (20260801) still targets 6.15.6,
-  # whose panel patch does not apply to 7.1.x.
-  rocknixPatches = fetchFromGitHub {
+  # ROCKNIX H700 kernel sources: shared and device patches, device trees, and
+  # kernel config. Pinned to a rev on their default branch.
+  rocknix = fetchFromGitHub {
     owner = "ROCKNIX";
     repo = "distribution";
-    rev = "5feac0f44de9789e862b6cf2c33741d58eada11b";
-    sparseCheckout = [ "projects/ROCKNIX/devices/H700/patches/linux" ];
-    hash = "sha256-uwvH75OFu+RDDiur3UjtIjMn1Xr9rhb323g830fml1I=";
+    rev = "abfdf71dcdd60312101440edc32d62f4d1e55eb8";
+    sparseCheckout = [
+      "projects/ROCKNIX/packages/linux/patches"
+      "projects/ROCKNIX/devices/H700/patches/linux"
+      "projects/ROCKNIX/devices/H700/linux"
+    ];
+    hash = "sha256-5qAz2kqb7QWMzpwVFduBHRvcmWRutRtyaikeY6MHYho=";
   };
 
-  # Applied wholesale. DTS-only patches are redundant at runtime
-  # (the DTB build pulls the same DTS via the patched kernel source),
-  # but kept here so the kernel source tree matches upstream's
-  # expectation for the rest of the patches.
-  patches = map (n: "${rocknixPatches}/projects/ROCKNIX/devices/H700/patches/linux/${n}") [
-    "0002-rg35xx-enable-HDMI-LCD.patch"
-    "0003-Update-sun8i_tcon_top.c.patch"
-    "0007-rg35xx-add-GPU-opp.patch"
-    "0008-v8_20260804_james_hilliard1_introduce_allwinner_h616_pwm_controller.patch"
-    "0010-rg35xx-enable-pwm-backlight.patch"
-    "0040-Revert-usb-musb-Fix-hardware-lockup-on-first-Rx-endp.patch"
-    "0110-v2_20250226_kikuchan98_drm_panel_add_generic_mipi_panel_driver.patch"
-    "0111-rg35xx-2024-use-panel-mipi-dpi-spi-driver.patch"
-    "0124-battery-name.patch"
-    "0126-20241018_macroalpha82_rg35xx_add_additional_hardware_support.patch"
-    "0127-enable-mmc1-for-RG35XX-2024.patch"
-    "0140-rg35xx-2024-use-rocknix-joypad-driver.patch"
-    "0144-Update-sun50i-h700-anbernic-rg35xx-h.dts.patch"
-    "0150-add-forcefeedback.patch"
-    "0151-phy-fix-OTG-host-mode.patch"
-    "0152-rg35xx-2024-enable-usb-otg.patch"
-    "0153-enable-rgb-leds.patch"
-    "0154-rocknix-dt-id.patch"
-    "0155-sun4i-set-rgb-connector-as-DSI.patch"
-    "0200-h700-update-opps.patch"
-    "0204-dts-Enable-hdmi-sound.patch"
-    "0901-dts-rg35xx-2024-fix-led-1-color.patch"
+  rocknixLinux = "${rocknix}/projects/ROCKNIX/packages/linux/patches";
+  rocknixH700 = "${rocknix}/projects/ROCKNIX/devices/H700";
+
+  # Patch directories in the order ROCKNIX's scripts/unpack applies them for H700.
+  patchDirs = [
+    "${rocknixLinux}/mainline"
+    "${rocknixLinux}/${lib.versions.majorMinor version}"
+    "${rocknixH700}/patches/linux"
   ];
 
-  # Patched source: stdenv handles unpack + patchPhase natively. Patches
-  # must apply BEFORE the configfile derivation runs `make defconfig` —
-  # otherwise patch-added Kconfig symbols (DRM_PANEL_MIPI, PWM_SUN20I,
-  # etc.) are unknown and silently dropped from .config. postPatch
-  # stages the panel firmware blob where CONFIG_EXTRA_FIRMWARE_DIR
-  # points so the build bakes it into the kernel image.
+  excludedPatches = [ ];
+
+  # Options layered over ROCKNIX's config.
+  localConfig = {
+    USB_ETH = "m";
+  };
+
   patchedSrc = stdenv.mkDerivation {
     name = "linux-h700-${version}-patched";
-    inherit src patches;
+    inherit src;
+    patchPhase = ''
+      runHook prePatch
+      for dir in ${lib.escapeShellArgs patchDirs}; do
+        [ -d "$dir" ] || continue
+        for p in "$dir"/*.patch; do
+          [ -e "$p" ] || continue
+          case " ${toString excludedPatches} " in
+            *" $(basename "$p") "*) echo "skipping $p"; continue ;;
+          esac
+          echo "applying $p"
+          patch -p1 --no-backup-if-mismatch < "$p"
+        done
+      done
+      runHook postPatch
+    '';
     postPatch = ''
+      cp -r ${rocknixH700}/linux/dts/. arch/arm64/boot/dts/
+      chmod -R u+w arch/arm64/boot/dts
+
       mkdir -p external-firmware/panels
       cp ${rg28xx-panel-firmware}/lib/firmware/panels/anbernic,rg28xx-panel.panel \
          external-firmware/panels/
+      cp ${wireless-regdb}/lib/firmware/regulatory.db{,.p7s} external-firmware/
     '';
     dontConfigure = true;
     dontBuild = true;
@@ -100,9 +102,20 @@ let
         chmod -R u+w linux-src
         cd linux-src
 
-        cp ${./h700_defconfig} arch/arm64/configs/h700_defconfig
+        cp ${rocknixH700}/linux/linux.aarch64.conf .config
+        scripts/config \
+          --set-str INITRAMFS_SOURCE "" \
+          --set-str DEFAULT_HOSTNAME "" \
+          --set-str EXTRA_FIRMWARE_DIR "external-firmware" \
+          --set-str EXTRA_FIRMWARE "$(cd external-firmware && find . -type f | sed 's|^\./||' | sort | xargs)" \
+          ${lib.concatStringsSep " " (lib.mapAttrsToList (k: v: "--set-val ${k} ${v}") localConfig)}
+        make olddefconfig
 
-        make h700_defconfig
+        ${lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (k: v: ''
+            grep -qx 'CONFIG_${k}=${v}' .config || { echo "CONFIG_${k}=${v} did not survive olddefconfig"; exit 1; }
+          '') localConfig
+        )}
         cp .config $out
       '';
 in
