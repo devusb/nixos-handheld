@@ -122,7 +122,7 @@ mupen64plus-EnableFBEmulation = "False"
 ## Quirks & workarounds
 
 - **Audio codec boots muted** — the sun4i / H616 codec starts with `DAC Playback Switch` off. A udev rule on `controlC*` add amixers it on (`socs/h700.nix`); without it, SDL2 audio teardown deadlocks.
-- **s2idle resume wedges mmc1** — on some real-suspend resumes the sunxi-mmc controller hits `fatal err update clk timeout`, the card detaches, and `/roms` goes I/O-error. `powerManagement.resumeCommands` polls for the wedge and rebinds the `sunxi-mmc` driver to recover. `mmc1` runtime PM is pinned `on` to avoid the same timeout from autosuspend.
+- **s2idle resume wedges mmc1** — on some real-suspend resumes the sunxi-mmc controller hits `fatal err update clk timeout`, the card detaches, and `/roms` goes I/O-error. `powerManagement.resumeCommands` polls for the wedge and rebinds the `sunxi-mmc` driver to recover.
 
 ## What works
 
