@@ -70,9 +70,10 @@ update logic next to the package.
 
 ## Pin inventory and tiers
 
-The bumpable packages live in `legacyPackages.<system>.*` (the overlay), which
-the flake exposes for every system so nix-update runs native tooling on the
-x86_64 GitHub runner.
+The bumpable packages live in `legacyPackages.<system>.*` (the overlay). The
+workflow runs on an aarch64 GitHub runner and updates the
+`legacyPackages.aarch64-linux` attrs, whose build inputs buildbot has already
+pushed to the attic cache.
 
 | Package | Tracks | Tier | Update mechanism |
 |---|---|---|---|
@@ -111,10 +112,11 @@ directories, H700 device trees and kernel config. The script:
 ## CI wiring
 
 `.github/workflows/update-packages.yml` runs daily after `update-flake-lock`.
-It installs Nix with `cachix/install-nix-action` and sets
+It runs on `ubuntu-24.04-arm`, installs Nix with `cachix/install-nix-action`,
+substitutes from and pushes to the attic cache (`ATTIC_*` secrets), and sets
 `NIX_PATH=nixpkgs=flake:nixpkgs` and `GITHUB_TOKEN` for the update scripts.
 `gepbird/nix-update-action` then runs
-`nix-update --flake --use-update-script --commit legacyPackages.x86_64-linux.<attr>`
+`nix-update --flake --use-update-script --commit legacyPackages.aarch64-linux.<attr>`
 for each scripted attr and opens one combined PR with the
 `GH_TOKEN_FOR_UPDATES` secret.
 
