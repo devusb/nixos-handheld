@@ -81,8 +81,8 @@ pushed to the attic cache.
 | `gptokeyb2` | release tags | scripted | `nix-update` default (latest release) |
 | `es-theme-gbz35-mod` | branch HEAD | scripted | `nix-update --version=branch` |
 | `SDL2_classic` | 2.x release tags | scripted | `update.sh` listing `release-2.*` tags (never SDL3) |
+| `libretro.flycast2021` | `master` branch HEAD | scripted | `nix-update --version=branch=master` |
 | `linux-h700` | ROCKNIX `next` | scripted | `pkgs/linux-h700/update.sh` |
-| `libretro.flycast2021` | pinned commit | manual | the pin is not on any upstream branch |
 | `libmali`, `mali-kbase` | ROCKNIX | manual | kept manual for now |
 | `drastic` | raw URL with embedded commit | manual | no version source |
 | `freeimage` | SVN rev | manual | nix-update has no SVN source |
@@ -152,7 +152,7 @@ before it runs normally.
   bad pin must be split out by hand to merge the rest. Accepted for simplicity.
 - `linux-h700` bumps whenever ROCKNIX `next` moves, even when no H700 paths
   changed. Accepted.
-- Manual tier (flycast2021, drastic, freeimage, blobs) still bumps by hand —
+- Manual tier (drastic, freeimage, blobs) still bumps by hand —
   documented, not automated.
 
 ## Decisions
