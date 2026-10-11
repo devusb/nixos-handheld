@@ -3,16 +3,17 @@
   stdenv,
   fetchFromGitHub,
   fetchpatch,
+  nix-update-script,
   libGL,
   zlib,
 }:
-stdenv.mkDerivation {
+stdenv.mkDerivation (finalAttrs: {
   pname = "flycast2021-libretro";
   version = "0-unstable-2025-01-16";
 
   src = fetchFromGitHub {
     owner = "metallic77";
-    repo = "flycast";
+    repo = "flycast32_rumble";
     rev = "603814c9f73b773c455d9a497f389d2f93a257fd";
     hash = "sha256-QVbb8mlOwuapCDihDlsCRqtJ+OQq8KuXbC+xOreZtw0=";
   };
@@ -53,12 +54,12 @@ stdenv.mkDerivation {
     "HAVE_OPENMP=0"
     "HAVE_LTCG=0"
     "HAVE_VULKAN=0"
-    "GIT_VERSION=603814c"
+    "GIT_VERSION=${builtins.substring 0 7 finalAttrs.src.rev}"
   ];
 
   installPhase = ''
     runHook preInstall
-    install -Dm555 flycast_libretro.so \
+    install -Dm555 flycast*_libretro.so \
       $out/lib/retroarch/cores/flycast2021_libretro.so
     runHook postInstall
   '';
@@ -67,12 +68,18 @@ stdenv.mkDerivation {
     core = "flycast2021";
     # Cores dir within the package, read by retroarch-bare.wrapper.
     libretroCore = "/lib/retroarch/cores";
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--flake"
+        "--version=branch=master"
+      ];
+    };
   };
 
   meta = {
     description = "Flycast 2021 (metallic77 low-end fork) libretro core";
-    homepage = "https://github.com/metallic77/flycast";
+    homepage = "https://github.com/metallic77/flycast32_rumble";
     license = lib.licenses.gpl2Only;
     platforms = [ "aarch64-linux" ];
   };
-}
+})

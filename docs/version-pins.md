@@ -19,6 +19,7 @@ buildbot fills, and opens one combined PR; buildbot-nix builds it on aarch64.
 | `gptokeyb2` | `pkgs/gptokeyb2/default.nix` | PortsMaster/gptokeyb2 | latest release tag | nix-update default |
 | `es-theme-gbz35-mod` | `pkgs/es-theme-gbz35-mod/default.nix` | Jetup13/es-theme-gbz35_mod | branch HEAD | `--version=branch` |
 | `SDL2_classic` | `pkgs/SDL2_classic/default.nix` | libsdl-org/SDL | 2.x release tags | `update.sh` (lists `release-2.*` tags) |
+| `libretro.flycast2021` | `pkgs/flycast2021/default.nix` | metallic77/flycast32_rumble | `master` branch HEAD | `--version=branch=master` |
 | `linux-h700` | `pkgs/linux-h700/default.nix` | ROCKNIX/distribution | `next` branch HEAD | `update.sh` (see below) |
 
 ### linux-h700 — kernel version and ROCKNIX rev move together
@@ -41,7 +42,6 @@ Run `pkgs/linux-h700/update.sh --dry-run` to see a bump without writing it.
 | `libmali` | `pkgs/libmali/default.nix` | ROCKNIX/libmali | ROCKNIX-tracked; kept manual for now | edit `rev`+`hash`; `nurl https://github.com/ROCKNIX/libmali <rev>` |
 | `mali-kbase` | `pkgs/mali-kbase/default.nix` | ROCKNIX/mali_kbase | ROCKNIX-tracked; kept manual for now | edit `rev`+`hash`; `nurl https://github.com/ROCKNIX/mali_kbase <rev>` |
 | `drastic` | `pkgs/drastic/default.nix` | ROCKNIX/packages raw tarball | version not tied to a tag/release nix-update can read | edit the commit in the `url` + `hash`; `nix-prefetch-url <url>` then `nix hash to-sri --type sha256 <hash>` |
-| `libretro.flycast2021` | `pkgs/flycast2021/default.nix` | metallic77/flycast | the pinned commit is not on any upstream branch, so `--version=branch` would move it backwards | edit `rev`+`hash`+`version`; `nurl https://github.com/metallic77/flycast <rev>` |
 | `freeimage` | `pkgs/freeimage/default.nix` | SourceForge SVN | nix-update has no SVN version source | edit `rev`+`hash` |
 | `u-boot-rg28xx-rocknix` | `pkgs/u-boot-rg28xx-rocknix/default.nix` | extracted from ROCKNIX image | local blob, no fetcher | re-extract from a newer ROCKNIX image |
 | `rg28xx-panel-firmware` | `pkgs/rg28xx-panel-firmware/default.nix` | extracted from ROCKNIX image | local blob, no fetcher | re-extract from a newer ROCKNIX image |

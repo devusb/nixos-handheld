@@ -33,6 +33,7 @@ jobs:
             legacyPackages.aarch64-linux.gptokeyb2,
             legacyPackages.aarch64-linux.es-theme-gbz35-mod,
             legacyPackages.aarch64-linux.SDL2_classic,
+            legacyPackages.aarch64-linux.libretro.flycast2021,
             legacyPackages.aarch64-linux.linux-h700
           branch: update-packages
           pr-title: "Update packages"
