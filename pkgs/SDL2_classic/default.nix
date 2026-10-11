@@ -118,6 +118,9 @@ stdenv.mkDerivation (finalAttrs: {
 
   setupHook = ./setup-hook.sh;
 
+  # Constrained to the 2.x release series — never SDL3.
+  passthru.updateScript = ./update.sh;
+
   meta = {
     description = "Native SDL2 (not sdl2-compat) with KMSDRM + Wayland support";
     homepage = "http://www.libsdl.org/";
