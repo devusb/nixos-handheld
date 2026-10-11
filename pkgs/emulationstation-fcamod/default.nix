@@ -29,13 +29,13 @@ let
 in
 stdenv.mkDerivation {
   pname = "emulationstation-fcamod";
-  version = "0-unstable-2026-04-07";
+  version = "1-unstable-2026-07-27";
 
   src = fetchFromGitHub {
     owner = "christianhaitian";
     repo = "EmulationStation-fcamod";
-    rev = "c70a664c16d22e394e62fbb76f3156d677fee4f6";
-    hash = "sha256-XPD/ZxcIapoQrjfga2WmcA9RtIxjtJPQx0UTRONkO3U=";
+    rev = "74498be31cd016af6a42d00310f876d7256eff52";
+    hash = "sha256-TSUwLd0FCaxy5+5I0r9tS8BhGTJrbxDQ9mriQo3GJCA=";
     fetchSubmodules = true;
   };
 
