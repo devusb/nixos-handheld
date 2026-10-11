@@ -1,5 +1,5 @@
 diff --git a/CMake/Packages/FindSDL2MIXER.cmake b/CMake/Packages/FindSDL2MIXER.cmake
-index ce180118..39c78fc1 100644
+index ce18011..39c78fc 100644
 --- a/CMake/Packages/FindSDL2MIXER.cmake
 +++ b/CMake/Packages/FindSDL2MIXER.cmake
 @@ -16,14 +16,14 @@ ELSE(SDL2_Mixer_INCLUDE_DIRS)
@@ -22,7 +22,7 @@ index ce180118..39c78fc1 100644
    ) 
  
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fb60e26a..d52f79c4 100644
+index fb60e26..d52f79c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -6,6 +6,7 @@ option(RPI "Set to ON to enable the Raspberry PI video player (omxplayer)" ${RPI
@@ -34,7 +34,7 @@ index fb60e26a..d52f79c4 100644
  #-------------------------------------------------------------------------------
  #add local find scripts to CMAKE path
 diff --git a/es-app/src/ApiSystem.cpp b/es-app/src/ApiSystem.cpp
-index 8911b238..1537ff26 100644
+index 8911b23..1537ff2 100644
 --- a/es-app/src/ApiSystem.cpp
 +++ b/es-app/src/ApiSystem.cpp
 @@ -1,3 +1,4 @@
@@ -43,14 +43,14 @@ index 8911b238..1537ff26 100644
  #include "ApiSystem.h"
  #include "DisplayPanelControl.h"
 diff --git a/es-app/src/guis/GuiMenu.cpp b/es-app/src/guis/GuiMenu.cpp
-index 09305141..c55e142e 100644
+index 216c7f2..ecb03b5 100644
 --- a/es-app/src/guis/GuiMenu.cpp
 +++ b/es-app/src/guis/GuiMenu.cpp
 @@ -82,9 +82,11 @@ GuiMenu::GuiMenu(Window* window, bool animate) : GuiComponent(window), mMenu(win
  	
  	addEntry(_("QUIT"), !Settings::getInstance()->getBool("ShowOnlyExit"), [this] {openQuitMenu(); }, "iconQuit");
  
--	addEntry(_("BAT") + ": " + std::string(getShOutput(R"(cat /sys/class/power_supply/battery/capacity)")) + "%" + " | " + _("SND") + ": " + std::string(getShOutput(R"(current_volume)")) + " | " + _("BRT") + ": " + std::to_string(ApiSystem::getInstance()->getBrightnessLevel()) + "% | " + _("WIFI") + ": " + std::string(getShOutput(R"(if [ -z $(cat /sys/class/net/wlan0/operstate) ]; then echo "Off"; else cat /sys/class/net/wlan0/operstate; fi)")), false, [this] {  });
+-	addEntry(_("BAT") + ": " + std::string(getShOutput(R"(if [ -f /tmp/battery.percent ]; then cat /tmp/battery.percent; else cat /sys/class/power_supply/battery/capacity; fi)")) + "%" + " | " + _("SND") + ": " + std::string(getShOutput(R"(current_volume)")) + " | " + _("BRT") + ": " + std::to_string(ApiSystem::getInstance()->getBrightnessLevel()) + "% | " + _("WIFI") + ": " + std::string(getShOutput(R"(if [ -z $(cat /sys/class/net/wlan0/operstate) ]; then echo "Off"; else cat /sys/class/net/wlan0/operstate; fi)")), false, [this] {  });
 -
 -	addEntry(_("Distro Version") + ": " + std::string(getShOutput(R"(cat /usr/share/plymouth/themes/text.plymouth | grep title | cut -c 7-50)")), false, [this] {  });
 +	// Status bar shell commands — substituted at build time via @placeholder@ markers.
@@ -61,7 +61,7 @@ index 09305141..c55e142e 100644
  
  	addChild(&mMenu);
  	addVersionInfo();
-@@ -1711,7 +1713,8 @@ void GuiMenu::openOtherSettings()
+@@ -1722,7 +1724,8 @@ void GuiMenu::openOtherSettings()
  			if (!setRepo.empty())
  			  mWindow->displayNotificationMessage(setRepo);
  		}
@@ -72,7 +72,7 @@ index 09305141..c55e142e 100644
  
  	// Clock time format (14:42 or 2:42 pm)
 diff --git a/es-core/src/BrightnessControl.cpp b/es-core/src/BrightnessControl.cpp
-index c1b86743..158c5917 100644
+index c1b8674..158c591 100644
 --- a/es-core/src/BrightnessControl.cpp
 +++ b/es-core/src/BrightnessControl.cpp
 @@ -1,3 +1,4 @@
@@ -81,7 +81,7 @@ index c1b86743..158c5917 100644
  #include "BrightnessControl.h"
  
 diff --git a/es-core/src/DisplayPanelControl.cpp b/es-core/src/DisplayPanelControl.cpp
-index 744c880e..59134947 100644
+index 744c880..5913494 100644
 --- a/es-core/src/DisplayPanelControl.cpp
 +++ b/es-core/src/DisplayPanelControl.cpp
 @@ -1,3 +1,4 @@
@@ -90,7 +90,7 @@ index 744c880e..59134947 100644
  #include "DisplayPanelControl.h"
  
 diff --git a/es-core/src/InputManager.h b/es-core/src/InputManager.h
-index 0fa5e4c8..152f10d6 100644
+index 0fa5e4c..152f10d 100644
 --- a/es-core/src/InputManager.h
 +++ b/es-core/src/InputManager.h
 @@ -18,7 +18,7 @@ private:
@@ -103,7 +103,7 @@ index 0fa5e4c8..152f10d6 100644
  	void loadDefaultKBConfig();
  
 diff --git a/es-core/src/renderers/Renderer.cpp b/es-core/src/renderers/Renderer.cpp
-index c8481918..b08c83ae 100644
+index c848191..b08c83a 100644
 --- a/es-core/src/renderers/Renderer.cpp
 +++ b/es-core/src/renderers/Renderer.cpp
 @@ -89,6 +89,10 @@ namespace Renderer
@@ -118,7 +118,7 @@ index c8481918..b08c83ae 100644
  		if (!Settings::getInstance()->getBool("Windowed"))
  			SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
 diff --git a/es-core/src/renderers/Renderer_GLES10.cpp b/es-core/src/renderers/Renderer_GLES10.cpp
-index 1472af08..228c2df6 100644
+index 1472af0..228c2df 100644
 --- a/es-core/src/renderers/Renderer_GLES10.cpp
 +++ b/es-core/src/renderers/Renderer_GLES10.cpp
 @@ -14,8 +14,9 @@
@@ -145,7 +145,7 @@ index 1472af08..228c2df6 100644
  	} // setupWindow
  
 diff --git a/es-core/src/resources/ResourceManager.cpp b/es-core/src/resources/ResourceManager.cpp
-index 187d00b4..aa844712 100644
+index 187d00b..aa84471 100644
 --- a/es-core/src/resources/ResourceManager.cpp
 +++ b/es-core/src/resources/ResourceManager.cpp
 @@ -35,7 +35,7 @@ std::string ResourceManager::getResourcePath(const std::string& path) const
@@ -158,7 +158,7 @@ index 187d00b4..aa844712 100644
  			return test;
  
 diff --git a/es-core/src/utils/StringUtil.cpp b/es-core/src/utils/StringUtil.cpp
-index d5ca0595..72cf9b50 100644
+index d5ca059..72cf9b5 100644
 --- a/es-core/src/utils/StringUtil.cpp
 +++ b/es-core/src/utils/StringUtil.cpp
 @@ -1,3 +1,4 @@
