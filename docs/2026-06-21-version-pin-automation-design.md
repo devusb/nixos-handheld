@@ -80,7 +80,7 @@ pushed to the attic cache.
 | `emulationstation-fcamod` | `351v` branch HEAD | scripted | `nix-update --version=branch=351v` |
 | `gptokeyb2` | release tags | scripted | `nix-update` default (latest release) |
 | `es-theme-gbz35-mod` | branch HEAD | scripted | `nix-update --version=branch` |
-| `SDL2_classic` | 2.x release tags | scripted | `update.sh` listing `release-2.*` tags (never SDL3) |
+| `SDL2_classic` | 2.x release tags | scripted | `--use-github-releases --version-regex 'release-(2\..*)'` (never SDL3) |
 | `linux-h700` | ROCKNIX `next` | scripted | `pkgs/linux-h700/update.sh` |
 | `libretro.flycast2021` | pinned commit | manual | the pin is not on any upstream branch |
 | `libmali`, `mali-kbase` | ROCKNIX | manual | kept manual for now |
