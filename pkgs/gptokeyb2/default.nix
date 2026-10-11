@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  nix-update-script,
   cmake,
   SDL2,
   libevdev,
@@ -9,12 +10,12 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "gptokeyb2";
-  version = "0.2.0-unstable-2025-09-22";
+  version = "2026.02.28-2309";
 
   src = fetchFromGitHub {
     owner = "PortsMaster";
     repo = "gptokeyb2";
-    rev = "7100d030fe10a7cd5f3053cd9922249498ab3a8d";
+    tag = finalAttrs.version;
     hash = "sha256-+Iib3gbxRAv+NbrHfSCm8EJPUCCBMkGV23ADrT1ZdXo=";
   };
 
@@ -41,6 +42,8 @@ stdenv.mkDerivation (finalAttrs: {
     ln -s gptokeyb2 $out/bin/gptokeyb
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { extraArgs = [ "--flake" ]; };
 
   meta = {
     description = "Game controller to keyboard/mouse mapper for PortMaster ports";
