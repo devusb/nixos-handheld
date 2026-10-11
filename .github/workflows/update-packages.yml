@@ -1,0 +1,35 @@
+name: update-packages
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # daily at 3am UTC, after update-flake-lock (2am)
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    env:
+      NIX_PATH: nixpkgs=flake:nixpkgs
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31.10.7
+      # nix-update runs each package's updateScript, then the action opens one
+      # combined PR.
+      - name: Update packages
+        uses: gepbird/nix-update-action@v3.1.2
+        with:
+          token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
+          packages: >-
+            legacyPackages.x86_64-linux.emulationstation-fcamod,
+            legacyPackages.x86_64-linux.gptokeyb2,
+            legacyPackages.x86_64-linux.es-theme-gbz35-mod,
+            legacyPackages.x86_64-linux.SDL2_classic,
+            legacyPackages.x86_64-linux.linux-h700
+          branch: update-packages
+          pr-title: "Update packages"
+          pr-labels: |
+            dependencies
+            automated
+          pr-body: |
+            Automated package bumps via nix-update. Built by buildbot-nix on aarch64.
