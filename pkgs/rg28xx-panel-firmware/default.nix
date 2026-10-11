@@ -11,7 +11,7 @@
 # u16 at byte offset 20) to 90 (RIGHT_UP) — userspace honoring DRM
 # panel-orientation then rotates 90° CCW, matching what fbcon does via
 # `fbcon=rotate:3`. See panel-mipi.c struct panel_firmware_config.
-{ stdenvNoCC }:
+{ lib, stdenvNoCC }:
 stdenvNoCC.mkDerivation {
   pname = "rg28xx-panel-firmware";
   version = "rocknix-20250517-rotate90";
@@ -29,5 +29,5 @@ stdenvNoCC.mkDerivation {
     runHook postInstall
   '';
 
-  meta.platforms = [ "aarch64-linux" ];
+  meta.platforms = lib.platforms.all;
 }
