@@ -89,6 +89,7 @@ let
     dontConfigure = true;
     dontBuild = true;
     installPhase = "cp -r . $out";
+    passthru.rev = rocknix.rev;
   };
 
   configfile =
@@ -123,7 +124,7 @@ let
         cp .config $out
       '';
 in
-linuxManualConfig {
+(linuxManualConfig {
   src = patchedSrc;
   inherit
     version
@@ -134,4 +135,12 @@ linuxManualConfig {
     CONFIG_MODULES = "y";
   };
   extraMeta.branch = lib.versions.majorMinor version;
-}
+}).overrideAttrs
+  (old: {
+    passthru = old.passthru // {
+      # nix-update reads version, src and src.rev from these.
+      inherit version;
+      src = patchedSrc;
+      updateScript = ./update.sh;
+    };
+  })
