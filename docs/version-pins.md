@@ -18,7 +18,7 @@ buildbot fills, and opens one combined PR; buildbot-nix builds it on aarch64.
 | `emulationstation-fcamod` | `pkgs/emulationstation-fcamod/default.nix` | christianhaitian/EmulationStation-fcamod | `351v` branch HEAD | `--version=branch=351v` |
 | `gptokeyb2` | `pkgs/gptokeyb2/default.nix` | PortsMaster/gptokeyb2 | latest release tag | nix-update default |
 | `es-theme-gbz35-mod` | `pkgs/es-theme-gbz35-mod/default.nix` | Jetup13/es-theme-gbz35_mod | branch HEAD | `--version=branch` |
-| `SDL2_classic` | `pkgs/SDL2_classic/default.nix` | libsdl-org/SDL | 2.x release tags | `update.sh` (lists `release-2.*` tags) |
+| `SDL2_classic` | `pkgs/SDL2_classic/default.nix` | libsdl-org/SDL | 2.x release tags | `--use-github-releases --version-regex 'release-(2\..*)'` |
 | `linux-h700` | `pkgs/linux-h700/default.nix` | ROCKNIX/distribution | `next` branch HEAD | `update.sh` (see below) |
 
 ### linux-h700 — kernel version and ROCKNIX rev move together

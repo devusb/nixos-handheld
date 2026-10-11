@@ -6,6 +6,8 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  fetchpatch,
+  nix-update-script,
   pkg-config,
   alsa-lib,
   libdrm,
@@ -22,13 +24,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "SDL2";
-  version = "2.32.6";
+  version = "2.32.10";
 
   src = fetchFromGitHub {
     owner = "libsdl-org";
     repo = "SDL";
     rev = "release-${finalAttrs.version}";
-    hash = "sha256-sXlW+ivDRCNMcZDzZEfOPGvFGU0aE4n/fO+Wxym6GGw=";
+    hash = "sha256-aG8q/z7kGy2CUHe+sR20ze55zMVF5ZqIArgbZB1CJDo=";
   };
 
   outputs = [
@@ -37,7 +39,14 @@ stdenv.mkDerivation (finalAttrs: {
   ];
   outputBin = "dev";
 
-  patches = [ ./find-headers.patch ];
+  patches = [
+    ./find-headers.patch
+    (fetchpatch {
+      name = "alsa-fix-snd_pcm_info_free-signature.patch";
+      url = "https://github.com/libsdl-org/SDL/commit/05c9b16183743925e59a489c4348141c8a050603.patch";
+      hash = "sha256-+cCyyADpHoQh2urG7bMCA5XSLirq41n2yxzQGN8kv0U=";
+    })
+  ];
 
   # Fix wayland-scanner PATH for cross builds (matches the upstream
   # nixpkgs SDL2 recipe). See libsdl-org/SDL#4860.
@@ -119,7 +128,14 @@ stdenv.mkDerivation (finalAttrs: {
   setupHook = ./setup-hook.sh;
 
   # Constrained to the 2.x release series — never SDL3.
-  passthru.updateScript = ./update.sh;
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--flake"
+      "--use-github-releases"
+      "--version-regex"
+      "release-(2\\..*)"
+    ];
+  };
 
   meta = {
     description = "Native SDL2 (not sdl2-compat) with KMSDRM + Wayland support";
