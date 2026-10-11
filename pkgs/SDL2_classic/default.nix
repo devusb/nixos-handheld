@@ -22,13 +22,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "SDL2";
-  version = "2.32.6";
+  version = "2.32.10";
 
   src = fetchFromGitHub {
     owner = "libsdl-org";
     repo = "SDL";
     rev = "release-${finalAttrs.version}";
-    hash = "sha256-sXlW+ivDRCNMcZDzZEfOPGvFGU0aE4n/fO+Wxym6GGw=";
+    hash = "sha256-aG8q/z7kGy2CUHe+sR20ze55zMVF5ZqIArgbZB1CJDo=";
   };
 
   outputs = [
