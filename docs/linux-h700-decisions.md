@@ -18,6 +18,10 @@ Their `devices/H700/linux/linux.aarch64.conf` is used as the base config. The ed
 
 `localConfig` holds options layered on top. It contains only `USB_ETH=m`, which their config disables and which `g_ether` needs for SSH over USB. The build fails if a `localConfig` value does not survive `make olddefconfig`.
 
+## Evaluation
+
+`linuxManualConfig` is given `config = { CONFIG_MODULES = "y"; }` instead of parsing the generated config through import-from-derivation, so the package evaluates on any system without building anything. nixpkgs reads only `MODULES` and `RUST` from it. The NixOS `requiredKernelConfig` assertions are skipped because the kernel has `passthru.features`, and the firewall reverse-path check, the only other reader, is not enabled on the RG28XX.
+
 ## Embedded firmware
 
 The rg28xx panel blob replaces their list of Realtek Wi-Fi/Bluetooth and other-panel blobs. `regulatory.db` and its signature from `wireless-regdb` are embedded, as ROCKNIX does, because their config builds `CFG80211` in with `CFG80211_REQUIRE_SIGNED_REGDB`.

@@ -123,18 +123,15 @@ let
         cp .config $out
       '';
 in
-(linuxManualConfig {
+linuxManualConfig {
   src = patchedSrc;
   inherit
     version
     modDirVersion
     configfile
     ;
-  allowImportFromDerivation = true;
+  config = {
+    CONFIG_MODULES = "y";
+  };
   extraMeta.branch = lib.versions.majorMinor version;
-}).overrideAttrs
-  (old: {
-    passthru = (old.passthru or { }) // {
-      features = { };
-    };
-  })
+}
