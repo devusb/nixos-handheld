@@ -9,10 +9,9 @@ imported blobs/patches.
 
 Each fetch-based package has a `passthru.updateScript`. The scheduled workflow
 uses `gepbird/nix-update-action`, which runs
-`nix-update --flake --use-update-script --commit legacyPackages.x86_64-linux.<attr>`
-for each package (x86_64 so the tooling runs natively on the GitHub runner; the
-flake exposes both aarch64 and x86_64 `legacyPackages`) and opens one combined
-PR; buildbot-nix builds it on aarch64.
+`nix-update --flake --use-update-script --commit legacyPackages.aarch64-linux.<attr>`
+for each package on an aarch64 runner, substituting from the attic cache
+buildbot fills, and opens one combined PR; buildbot-nix builds it on aarch64.
 
 | Package | File | Upstream | Tracks | updateScript flags |
 |---|---|---|---|---|
