@@ -10,13 +10,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "gptokeyb2";
-  version = "2026.02.28-2309";
+  version = "2026.10.05-1355";
 
   src = fetchFromGitHub {
     owner = "PortsMaster";
     repo = "gptokeyb2";
     tag = finalAttrs.version;
-    hash = "sha256-+Iib3gbxRAv+NbrHfSCm8EJPUCCBMkGV23ADrT1ZdXo=";
+    hash = "sha256-bPEQChkMvyV55sedOtAeN/yOBggxWsQQQIRT0Og+OyU=";
   };
 
   nativeBuildInputs = [ cmake ];
