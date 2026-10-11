@@ -13,7 +13,7 @@
   ...
 }:
 let
-  # ROCKNIX targets 7.2 for H700 — see the DEVICE case in their
+  # The H700 PKG_VERSION in ROCKNIX's
   # projects/ROCKNIX/packages/linux/package.mk. Fetched directly rather than
   # via a nixpkgs kernel attr so an EOL series being dropped from nixpkgs
   # cannot break the build.
@@ -41,12 +41,16 @@ let
   rocknixLinux = "${rocknix}/projects/ROCKNIX/packages/linux/patches";
   rocknixH700 = "${rocknix}/projects/ROCKNIX/devices/H700";
 
+  # Version-specific patch directories ROCKNIX applies for H700: any the H700
+  # case adds to PKG_PATCH_DIRS, then the one named exactly after PKG_VERSION.
+  versionPatchDirs = [ "7.2" ];
+
   # Patch directories in the order ROCKNIX's scripts/unpack applies them for H700.
   patchDirs = [
     "${rocknixLinux}/mainline"
-    "${rocknixLinux}/${lib.versions.majorMinor version}"
-    "${rocknixH700}/patches/linux"
-  ];
+  ]
+  ++ map (d: "${rocknixLinux}/${d}") versionPatchDirs
+  ++ [ "${rocknixH700}/patches/linux" ];
 
   excludedPatches = [ ];
 
