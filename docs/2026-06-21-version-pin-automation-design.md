@@ -113,7 +113,7 @@ directories, H700 device trees and kernel config. The script:
 
 `.github/workflows/update-packages.yml` runs daily after `update-flake-lock`.
 It runs on `ubuntu-24.04-arm`, installs Nix with `cachix/install-nix-action`,
-substitutes from and pushes to the attic cache (`ATTIC_*` secrets), and sets
+substitutes from the attic cache (`ATTIC_*` secrets) without pushing, and sets
 `NIX_PATH=nixpkgs=flake:nixpkgs` and `GITHUB_TOKEN` for the update scripts.
 `gepbird/nix-update-action` then runs
 `nix-update --flake --use-update-script --commit legacyPackages.aarch64-linux.<attr>`
