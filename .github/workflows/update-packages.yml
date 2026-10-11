@@ -39,5 +39,3 @@ jobs:
           pr-labels: |
             dependencies
             automated
-          pr-body: |
-            Automated package bumps via nix-update. Built by buildbot-nix on aarch64.
