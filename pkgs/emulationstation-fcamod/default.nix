@@ -109,7 +109,7 @@ stdenv.mkDerivation {
     description = "EmulationStation frontend (fcamod fork, 351v branch) for handheld gaming devices";
     homepage = "https://github.com/christianhaitian/EmulationStation-fcamod";
     license = lib.licenses.mit;
-    platforms = [ "aarch64-linux" ];
+    platforms = lib.platforms.linux;
     mainProgram = "emulationstation";
   };
 }

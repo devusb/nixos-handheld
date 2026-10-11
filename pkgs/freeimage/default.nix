@@ -112,6 +112,6 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Open Source library for accessing popular graphics image file formats";
     homepage = "http://freeimage.sourceforge.net/";
     license = lib.licenses.gpl2;
-    platforms = [ "aarch64-linux" ];
+    platforms = lib.platforms.linux;
   };
 })
