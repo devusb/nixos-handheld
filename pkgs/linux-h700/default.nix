@@ -65,7 +65,7 @@ let
     patchPhase = ''
       runHook prePatch
       for dir in ${lib.escapeShellArgs patchDirs}; do
-        [ -d "$dir" ] || continue
+        [ -d "$dir" ] || { echo "missing patch directory: $dir" >&2; exit 1; }
         for p in "$dir"/*.patch; do
           [ -e "$p" ] || continue
           case " ${toString excludedPatches} " in
