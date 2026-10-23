@@ -29,13 +29,13 @@ let
   rocknix = fetchFromGitHub {
     owner = "ROCKNIX";
     repo = "distribution";
-    rev = "64b16876e99c181dad2a4d9ebadd32b27a62cf3b";
+    rev = "8b70f693b87464efb2ad0febe570db8eb67b6563";
     sparseCheckout = [
       "projects/ROCKNIX/packages/linux/patches"
       "projects/ROCKNIX/devices/H700/patches/linux"
       "projects/ROCKNIX/devices/H700/linux"
     ];
-    hash = "sha256-Th0UnV2eondoBvKTv2Gv2eXRLX+GTnpgcuh6gJKq1NI=";
+    hash = "sha256-018I5aKSAhcBZeCVNezz9W4uJLfOpDomF2snqbipwiY=";
   };
 
   rocknixLinux = "${rocknix}/projects/ROCKNIX/packages/linux/patches";
