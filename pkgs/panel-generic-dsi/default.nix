@@ -9,18 +9,16 @@ kernel.stdenv.mkDerivation {
 
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
-  buildPhase = ''
-    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
-      M=$PWD \
-      ARCH=${kernel.stdenv.hostPlatform.linuxArch} \
-      CROSS_COMPILE=${kernel.stdenv.cc.targetPrefix} \
-      modules
-  '';
+  makeFlags = kernel.commonMakeFlags ++ [
+    "-C"
+    "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+    "M=$(PWD)"
+    "INSTALL_MOD_PATH=${placeholder "out"}"
+    "INSTALL_MOD_DIR=extra"
+  ];
 
-  installPhase = ''
-    install -D panel-generic-dsi.ko \
-      $out/lib/modules/${kernel.modDirVersion}/extra/panel-generic-dsi.ko
-  '';
+  buildFlags = [ "modules" ];
+  installTargets = [ "modules_install" ];
 
   meta = {
     description = "Generic MIPI-DSI panel driver (ROCKNIX)";
