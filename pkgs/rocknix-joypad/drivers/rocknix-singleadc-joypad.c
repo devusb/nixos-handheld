@@ -974,3 +974,4 @@ module_exit(joypad_exit);
 MODULE_AUTHOR("ROCKNIX");
 MODULE_DESCRIPTION("ROCKNIX singleadc joypad driver");
 MODULE_LICENSE("GPL");
+MODULE_IMPORT_NS("IIO_CONSUMER");
