@@ -16,29 +16,22 @@ kernel.stdenv.mkDerivation {
 
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
-  makeFlags = [
-    "KDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
-    "ARCH=${kernel.stdenv.hostPlatform.linuxArch}"
-    "CROSS_COMPILE=${kernel.stdenv.cc.targetPrefix}"
+  makeFlags = kernel.commonMakeFlags ++ [
+    "-C"
+    "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+    "M=$(PWD)/product/kernel/drivers/gpu/arm/midgard"
+    "INSTALL_MOD_PATH=${placeholder "out"}"
+    "INSTALL_MOD_DIR=extra"
+    "CONFIG_MALI_MIDGARD=m"
+    "CONFIG_MALI_PLATFORM_NAME=devicetree"
+    "CONFIG_MALI_REAL_HW=y"
+    "CONFIG_MALI_CSF_SUPPORT=n"
+    "CONFIG_MALI_DEVFREQ=y"
+    "CONFIG_MALI_GATOR_SUPPORT=n"
   ];
 
-  buildPhase = ''
-    make -C ${kernel.dev}/lib/modules/${kernel.modDirVersion}/build \
-      M=$PWD/product/kernel/drivers/gpu/arm/midgard \
-      ARCH=${kernel.stdenv.hostPlatform.linuxArch} \
-      CROSS_COMPILE=${kernel.stdenv.cc.targetPrefix} \
-      CONFIG_MALI_MIDGARD=m \
-      CONFIG_MALI_PLATFORM_NAME=devicetree \
-      CONFIG_MALI_REAL_HW=y \
-      CONFIG_MALI_CSF_SUPPORT=n \
-      CONFIG_MALI_DEVFREQ=y \
-      CONFIG_MALI_GATOR_SUPPORT=n \
-      modules
-  '';
-
-  installPhase = ''
-    find . -name '*.ko' -exec install -D {} $out/lib/modules/${kernel.modDirVersion}/extra/{} \;
-  '';
+  buildFlags = [ "modules" ];
+  installTargets = [ "modules_install" ];
 
   meta = {
     description = "ARM Mali Bifrost GPU kernel module (proprietary kbase driver)";
