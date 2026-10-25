@@ -6,6 +6,7 @@
   ninja,
   pkg-config,
   libdrm,
+  patchelfUnstable,
 }:
 stdenv.mkDerivation {
   pname = "libmali-bifrost-g31";
@@ -27,6 +28,7 @@ stdenv.mkDerivation {
     meson
     ninja
     pkg-config
+    patchelfUnstable
   ];
   buildInputs = [ libdrm ];
   propagatedBuildInputs = [ libdrm ];
